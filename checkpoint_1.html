@@ -372,16 +372,8 @@
             Their unique behaviors and habitats are truly a sight to behold.
             Prepare for your ultimate discovery!
         </p>
-        <p>
-            Add more detailed information about the animals, their conservation status,
-            interesting facts, or even a short video embed here. Make it engaging!
-        </p>
-
         <div id="ar-vision-section"> <h2>Experience with AR Vision</h2>
             <p>Step into an immersive world and interact with a 3D model of our featured animal!</p>
-            <div class="image-placeholder" style="height: 200px;">
-                <img id="ar-model-preview" src="assets/colored_flower.jpg" alt="AR Model Preview">
-            </div>
             <button id="experience-ar-button">Experience with AR</button>
         </div>
 
@@ -537,7 +529,7 @@
         const initialContentDiv = document.getElementById('initial-content');
         const experienceArButton = document.getElementById('experience-ar-button');
         const arVisionSection = document.getElementById('ar-vision-section');
-        const arModelPreviewImage = document.getElementById('ar-model-preview');
+        const arModelPreviewImage = document.getElementById('ar-model-preview'); // This is no longer in HTML, but reference kept in JS
         const mainModelCanvas = document.getElementById('main-model-canvas');
         const arExperienceDiv = document.getElementById('ar-experience');
         const arCanvas = document.getElementById('ar-canvas');
@@ -982,7 +974,7 @@
 
             if (thisCheckpointARData) {
                 arVisionSection.style.display = 'block';
-                arModelPreviewImage.src = thisCheckpointARData.arPreviewImage;
+                // No longer referencing arModelPreviewImage.src here as the element is removed.
             } else {
                 arVisionSection.style.display = 'none';
             }
