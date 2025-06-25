@@ -76,11 +76,9 @@
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
         }
 
-        /* Info Panel Styles (existing) */
+        /* Info Panel Styles */
         #info-panel {
             position: absolute;
-            top: 20px;
-            left: 20px;
             background: rgba(45, 45, 45, 0.9);
             color: white;
             padding: 15px;
@@ -89,15 +87,19 @@
             z-index: 10;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
             max-width: 320px;
-            transition: opacity 0.3s ease-in-out;
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out; /* Add transform to transition */
             opacity: 0;
             pointer-events: none;
-            transform: translate(-50%, -100%);
+            /* Default for desktop/larger screens */
+            top: 20px; /* Kept for desktop */
+            left: 20px; /* Kept for desktop */
+            transform: translate(0, 0); /* Reset transform for desktop */
         }
 
         #info-panel.visible {
             opacity: 1;
             display: block;
+            pointer-events: all;
         }
 
         #info-panel h3 {
@@ -125,6 +127,54 @@
             color: #C1E8FF;
             text-decoration: underline;
         }
+
+        /* Close button for info panel */
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            line-height: 1; /* Adjust line-height to center 'X' vertically */
+            padding: 0 5px; /* Add some padding for easier click */
+        }
+
+        .close-button:hover {
+            color: #ff6347; /* Tomato red on hover */
+        }
+
+        /* Media query for mobile perspective */
+        @media (max-width: 768px) {
+            #info-panel {
+                top: auto; /* Remove top positioning */
+                bottom: 10px; /* Position from the bottom */
+                left: 50%; /* Center horizontally */
+                transform: translateX(-50%); /* Adjust for horizontal centering */
+                width: 90%; /* Take up more width */
+                max-width: 400px; /* Limit max width for larger phones */
+                padding: 15px; /* Keep padding consistent */
+            }
+
+            .close-button {
+                top: 5px; /* Adjust top for mobile */
+                right: 10px; /* Adjust right for mobile */
+            }
+
+            #welcome-screen h1 {
+                font-size: 2.5em; /* Smaller font for mobile welcome */
+            }
+
+            #welcome-screen p {
+                font-size: 1.2em; /* Smaller font for mobile welcome */
+            }
+
+            #welcome-button {
+                font-size: 1.4em; /* Smaller button text for mobile */
+                padding: 12px 30px; /* Smaller padding for button */
+            }
+        }
     </style>
 
     <script type="importmap">
@@ -137,15 +187,14 @@
     </script>
 </head>
 <body>
-    <!-- Welcome Screen -->
     <div id="welcome-screen">
         <h1>Welcome to Bukit Kiara AR World</h1>
         <p>Embark on an interactive journey to discover amazing wildlife!</p>
         <button id="welcome-button">Enter Experience</button>
     </div>
 
-    <!-- Info Panel (remains the same) -->
     <div id="info-panel">
+        <span class="close-button" id="close-info-panel">&times;</span>
         <h3 id="checkpoint-name"></h3>
         <p id="animal-description"></p>
         <p><a id="checkpoint-link" href="#" target="_blank">View Details</a></p>
@@ -242,10 +291,6 @@
             loadedModel = fbx; // Assign the loaded model
             fbx.scale.set(0.01, 0.01, 0.01); // Scale the model down
 
-            // IMPORTANT: This rotation line has been removed/commented out
-            // because you confirmed your FBX model is already Y-up from your 3D software.
-            // fbx.rotation.x = -Math.PI / 2; // (Previously here, now removed)
-
             // Center the model in the scene
             const box = new THREE.Box3().setFromObject(fbx);
             const center = box.getCenter(new THREE.Vector3());
@@ -269,6 +314,7 @@
         const checkpointName = document.getElementById('checkpoint-name');
         const animalDescription = document.getElementById('animal-description');
         const checkpointLink = document.getElementById('checkpoint-link');
+        const closeInfoPanelButton = document.getElementById('close-info-panel'); // Get the new close button
 
         // Function to update and show the info panel
         function showInfoPanel(name, description, linkUrl, clientX, clientY) {
@@ -277,8 +323,15 @@
             checkpointLink.href = linkUrl;
             checkpointLink.textContent = `View Details for ${name}`;
 
-            infoPanel.style.left = `${clientX}px`;
-            infoPanel.style.top = `${clientY}px`;
+            // Dynamic positioning for desktop, fixed for mobile via CSS
+            if (window.innerWidth > 768) { // Only apply dynamic positioning on larger screens
+                infoPanel.style.left = `${clientX}px`;
+                infoPanel.style.top = `${clientY}px`;
+                infoPanel.style.transform = 'translate(0, 0)'; // Ensure no unwanted transform from mobile styles
+            } else {
+                // Mobile positioning is handled by CSS media query
+            }
+
             infoPanel.classList.add('visible');
         }
 
@@ -290,6 +343,7 @@
         // Event listener for mouse movement (HOVER)
         window.addEventListener('mousemove', event => {
             if (!controls.enabled) return; // Only process hover if controls are enabled
+            if (window.innerWidth <= 768) return; // Disable hover info panel on mobile
 
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -313,7 +367,8 @@
                     currentIntersected = mesh;
                     const data = checkpointData[mesh.name];
                     if (data) {
-                        showInfoPanel(data.displayName, data.animals, data.url, event.clientX, event.clientY);
+                        // On desktop, show panel at mouse position
+                        showInfoPanel(data.displayName, data.animals, data.url, event.clientX + 10, event.clientY + 10);
                     }
                 }
             } else {
@@ -324,7 +379,7 @@
             }
         });
 
-        // Event listener for mouse click (to allow navigating to the URL)
+        // Event listener for mouse click (to allow navigating to the URL and show info panel on mobile)
         window.addEventListener('click', event => {
             if (!controls.enabled) return; // Only process click if controls are enabled
 
@@ -345,11 +400,20 @@
             if (intersects.length > 0) {
                 const mesh = intersects[0].object;
                 const data = checkpointData[mesh.name];
-                if (data && data.url) {
-                    window.open(data.url, '_blank'); // Open the URL in a new tab
+                if (data) {
+                    // If on mobile, show the info panel (clicks will still trigger this)
+                    if (window.innerWidth <= 768) {
+                        showInfoPanel(data.displayName, data.animals, data.url); // No clientX/Y needed, CSS handles position
+                    } else {
+                        // On desktop, a click on the flag opens the URL directly
+                        window.open(data.url, '_blank');
+                    }
                 }
             }
         });
+
+        // Event listener for the new close button
+        closeInfoPanelButton.addEventListener('click', hideInfoPanel);
 
         // Animation loop - now called only after welcome screen disappears
         function animate() {
