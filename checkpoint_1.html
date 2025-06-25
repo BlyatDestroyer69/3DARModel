@@ -31,7 +31,7 @@
             width: 100%;
             margin-top: 50px;
             text-align: center;
-            transition: opacity 0.5s ease-out;
+            transition: opacity 0.5s ease-out; /* Keep transition for smoother hiding */
             opacity: 1;
             display: flex;
             flex-direction: column;
@@ -114,21 +114,15 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             background-color: #222;
-            transition: opacity 0.5s ease-out;
-            opacity: 0;
-            pointer-events: none;
             z-index: 10;
             flex-direction: column;
+            /* Changes for display property */
+            display: none; /* Initially hidden */
         }
 
-        #ar-experience.visible {
-            opacity: 1;
-            pointer-events: all;
-        }
+        /* Removed .visible class for AR experience visibility */
+        /* Instead, JS will toggle display: flex/none */
 
         /* The WebXR canvas will take full screen */
         #ar-canvas {
@@ -500,7 +494,6 @@
 
         // Get references to DOM elements globally
         const initialContentDiv = document.getElementById('initial-content');
-        // Removed: const experienceArButton = document.getElementById('experience-ar-button');
         const arVisionSection = document.getElementById('ar-vision-section');
         const arModelPreviewImage = document.getElementById('ar-model-preview');
         const mainModelCanvas = document.getElementById('main-model-canvas');
@@ -714,7 +707,7 @@
         function onXRSessionEnded() {
             console.log("XR Session Ended.");
             disposeARExperience();
-            arExperienceDiv.classList.remove('visible');
+            arExperienceDiv.style.display = 'none'; // Changed from classList.remove('visible')
             initialContentDiv.classList.remove('hidden');
             stopBackgroundAudio();
             initMainModelViewer();
@@ -824,7 +817,7 @@
             disposeMainModelViewer();
 
             initialContentDiv.classList.add('hidden');
-            arExperienceDiv.classList.add('visible');
+            arExperienceDiv.style.display = 'flex'; // Changed from classList.add('visible')
             cameraPermissionMessage.style.display = 'none'; // Hide if already visible
 
             arModelTitle.textContent = thisCheckpointARData ? thisCheckpointARData.arModelTitle : "Model Information";
@@ -863,7 +856,7 @@
                         alert("AR experience could not be started. Error: " + e.message + "\nFalling back to 3D model viewer.");
                     }
                     // Fallback to the main 3D model viewer
-                    arExperienceDiv.classList.remove('visible');
+                    arExperienceDiv.style.display = 'none'; // Changed from classList.remove('visible')
                     initialContentDiv.classList.remove('hidden');
                     initMainModelViewer();
                     stopBackgroundAudio();
@@ -871,7 +864,7 @@
             } else {
                 console.warn("WebXR is not supported by this browser. This device may not have AR capabilities.");
                 alert("Your browser or device does not support WebXR AR. Showing a 3D model viewer instead.");
-                arExperienceDiv.classList.remove('visible');
+                arExperienceDiv.style.display = 'none'; // Changed from classList.remove('visible')
                 initialContentDiv.classList.remove('hidden');
                 initMainModelViewer();
                 stopBackgroundAudio();
@@ -880,15 +873,13 @@
 
 
         // --- Event Listeners ---
-        // Removed: experienceArButton.addEventListener('click', enterARExperience);
-
         arBackButton.addEventListener('click', () => {
             if (arSession) {
                 arSession.end();
             } else {
                 disposeARExperience();
                 stopBackgroundAudio();
-                arExperienceDiv.classList.remove('visible');
+                arExperienceDiv.style.display = 'none'; // Changed from classList.remove('visible')
                 initialContentDiv.classList.remove('hidden');
                 initMainModelViewer();
             }
@@ -951,6 +942,9 @@
             } else {
                 arVisionSection.style.display = 'none';
             }
+
+            // Ensure AR experience div is hidden initially with display: none
+            arExperienceDiv.style.display = 'none';
 
             if (currentLanguage === 'en') {
                 arLangEnButton.classList.add('active');
