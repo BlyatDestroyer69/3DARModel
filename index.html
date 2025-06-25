@@ -78,7 +78,7 @@
 
         /* Info Panel Styles */
         #info-panel {
-            position: absolute;
+            position: absolute; /* Default for desktop */
             background: rgba(45, 45, 45, 0.9);
             color: white;
             padding: 15px;
@@ -87,12 +87,13 @@
             z-index: 10;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
             max-width: 320px;
-            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out; /* Add transform to transition */
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
             opacity: 0;
             pointer-events: none;
-            /* Default for desktop/larger screens */
-            top: 20px; /* Kept for desktop */
-            left: 20px; /* Kept for desktop */
+            
+            /* Desktop specific positioning */
+            top: 20px;
+            left: 20px;
             transform: translate(0, 0); /* Reset transform for desktop */
         }
 
@@ -137,8 +138,8 @@
             font-weight: bold;
             color: white;
             cursor: pointer;
-            line-height: 1; /* Adjust line-height to center 'X' vertically */
-            padding: 0 5px; /* Add some padding for easier click */
+            line-height: 1;
+            padding: 0 5px;
         }
 
         .close-button:hover {
@@ -148,18 +149,25 @@
         /* Media query for mobile perspective */
         @media (max-width: 768px) {
             #info-panel {
+                position: fixed; /* Crucial for mobile: fixed to viewport */
                 top: auto; /* Remove top positioning */
-                bottom: 10px; /* Position from the bottom */
-                left: 50%; /* Center horizontally */
-                transform: translateX(-50%); /* Adjust for horizontal centering */
-                width: 90%; /* Take up more width */
-                max-width: 400px; /* Limit max width for larger phones */
-                padding: 15px; /* Keep padding consistent */
+                bottom: 0; /* Stick to the bottom */
+                left: 0; /* Span full width */
+                right: 0; /* Span full width */
+                width: 100%; /* Take full width */
+                max-width: none; /* Remove max-width restriction */
+                height: auto;
+                max-height: 50vh; /* Limit height to half the viewport height */
+                border-radius: 12px 12px 0 0; /* Rounded top corners, sharp bottom */
+                padding: 20px; /* Adjust padding for mobile */
+                box-sizing: border-box; /* Include padding in width/height */
+                overflow-y: auto; /* Enable scrolling if content is too long */
+                transform: translateX(0); /* Ensure no horizontal transform */
             }
 
             .close-button {
-                top: 5px; /* Adjust top for mobile */
-                right: 10px; /* Adjust right for mobile */
+                top: 10px; /* Keep consistent or adjust for mobile */
+                right: 20px; /* Keep consistent or adjust for mobile */
             }
 
             #welcome-screen h1 {
@@ -329,7 +337,8 @@
                 infoPanel.style.top = `${clientY}px`;
                 infoPanel.style.transform = 'translate(0, 0)'; // Ensure no unwanted transform from mobile styles
             } else {
-                // Mobile positioning is handled by CSS media query
+                // Mobile positioning is handled by CSS media query (fixed at bottom)
+                // We just need to make sure it becomes visible.
             }
 
             infoPanel.classList.add('visible');
