@@ -192,28 +192,6 @@
             transform: translateY(-2px);
         }
 
-        /* Experience AR Button */
-        #experience-ar-button {
-            background-color: #2ecc71;
-            color: white;
-            padding: 15px 30px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.4em;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            margin-top: 25px;
-            position: relative; /* IMPORTANT: Required for z-index to work */
-            z-index: 10; /* IMPORTANT: Ensure buttons are on top of other content */
-            pointer-events: all; /* IMPORTANT: Explicitly enable clicks */
-        }
-        #experience-ar-button:hover {
-            background-color: #27ae60;
-            transform: translateY(-2px);
-        }
-
         /* Language Toggle - NEW LOCATION inside AR experience */
         #ar-language-toggle {
             margin-top: 20px;
@@ -293,10 +271,6 @@
             p {
                 font-size: 0.95em;
             }
-            #experience-ar-button {
-                font-size: 1.2em;
-                padding: 12px 25px;
-            }
 
             #ar-experience {
                 flex-direction: column;
@@ -335,10 +309,6 @@
             p {
                 font-size: 0.9em;
             }
-            #experience-ar-button {
-                font-size: 1em;
-                padding: 10px 20px;
-            }
             #model-info-panel {
                 height: 40%;
                 padding: 10px;
@@ -372,13 +342,13 @@
             Their unique behaviors and habitats are truly a sight to behold.
             Prepare for your ultimate discovery!
         </p>
+
         <div id="ar-vision-section"> <h2>Experience with AR Vision</h2>
             <p>Step into an immersive world and interact with a 3D model of our featured animal!</p>
             <div class="image-placeholder" style="height: 200px; cursor: pointer;">
                 <img id="ar-model-preview" src="assets/colored_flower.jpg" alt="AR Model Preview">
             </div>
-            <button id="experience-ar-button">Experience with AR</button>
-        </div>
+            </div>
 
         <a href="index.html" class="back-button">Back to Map</a>
     </div>
@@ -530,7 +500,7 @@
 
         // Get references to DOM elements globally
         const initialContentDiv = document.getElementById('initial-content');
-        const experienceArButton = document.getElementById('experience-ar-button');
+        // Removed: const experienceArButton = document.getElementById('experience-ar-button');
         const arVisionSection = document.getElementById('ar-vision-section');
         const arModelPreviewImage = document.getElementById('ar-model-preview');
         const mainModelCanvas = document.getElementById('main-model-canvas');
@@ -886,6 +856,7 @@
                     if (e.name === 'NotAllowedError' || e.name === 'SecurityError') {
                         // This usually means camera access was denied or not over HTTPS
                         cameraPermissionMessage.style.display = 'block'; // Show the custom message
+                        alert("AR experience requires camera access. Please grant camera permission and ensure the site is served over HTTPS.");
                     } else if (e.name === 'InvalidStateError' && e.message.includes('XR system is not ready')) {
                          alert("Your device or browser might not be ready for WebXR AR. Please ensure your browser is up-to-date and supports WebXR.");
                     } else {
@@ -909,7 +880,7 @@
 
 
         // --- Event Listeners ---
-        // experienceArButton.addEventListener('click', enterARExperience); // Removed this line
+        // Removed: experienceArButton.addEventListener('click', enterARExperience);
 
         arBackButton.addEventListener('click', () => {
             if (arSession) {
@@ -933,6 +904,7 @@
                 enterARExperience(); // Retry entering AR
             } catch (err) {
                 console.error("Failed to grant camera access:", err);
+                alert("Camera access denied. AR experience cannot proceed without camera permission.");
                 cameraPermissionMessage.style.display = 'block'; // Re-show message if still denied
             }
         });
@@ -975,8 +947,7 @@
             if (thisCheckpointARData) {
                 arVisionSection.style.display = 'block';
                 arModelPreviewImage.src = thisCheckpointARData.arPreviewImage;
-                arModelPreviewImage.addEventListener('click', enterARExperience); // Added event listener to image
-                experienceArButton.style.display = 'none'; // Hide the button
+                arModelPreviewImage.addEventListener('click', enterARExperience); // Ensure image is clickable
             } else {
                 arVisionSection.style.display = 'none';
             }
