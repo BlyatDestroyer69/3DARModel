@@ -374,6 +374,9 @@
         </p>
         <div id="ar-vision-section"> <h2>Experience with AR Vision</h2>
             <p>Step into an immersive world and interact with a 3D model of our featured animal!</p>
+            <div class="image-placeholder" style="height: 200px; cursor: pointer;">
+                <img id="ar-model-preview" src="assets/colored_flower.jpg" alt="AR Model Preview">
+            </div>
             <button id="experience-ar-button">Experience with AR</button>
         </div>
 
@@ -529,7 +532,7 @@
         const initialContentDiv = document.getElementById('initial-content');
         const experienceArButton = document.getElementById('experience-ar-button');
         const arVisionSection = document.getElementById('ar-vision-section');
-        const arModelPreviewImage = document.getElementById('ar-model-preview'); // This is no longer in HTML, but reference kept in JS
+        const arModelPreviewImage = document.getElementById('ar-model-preview');
         const mainModelCanvas = document.getElementById('main-model-canvas');
         const arExperienceDiv = document.getElementById('ar-experience');
         const arCanvas = document.getElementById('ar-canvas');
@@ -883,9 +886,7 @@
                     if (e.name === 'NotAllowedError' || e.name === 'SecurityError') {
                         // This usually means camera access was denied or not over HTTPS
                         cameraPermissionMessage.style.display = 'block'; // Show the custom message
-                        alert("AR experience requires camera access. Please grant camera permission and ensure the site is served over HTTPS.");
                     } else if (e.name === 'InvalidStateError' && e.message.includes('XR system is not ready')) {
-                        // Specific error for WebXR not being ready (e.g., in unsupported environment)
                          alert("Your device or browser might not be ready for WebXR AR. Please ensure your browser is up-to-date and supports WebXR.");
                     } else {
                         alert("AR experience could not be started. Error: " + e.message + "\nFalling back to 3D model viewer.");
@@ -908,7 +909,7 @@
 
 
         // --- Event Listeners ---
-        experienceArButton.addEventListener('click', enterARExperience);
+        // experienceArButton.addEventListener('click', enterARExperience); // Removed this line
 
         arBackButton.addEventListener('click', () => {
             if (arSession) {
@@ -932,7 +933,6 @@
                 enterARExperience(); // Retry entering AR
             } catch (err) {
                 console.error("Failed to grant camera access:", err);
-                alert("Camera access denied. AR experience cannot proceed without camera permission.");
                 cameraPermissionMessage.style.display = 'block'; // Re-show message if still denied
             }
         });
@@ -974,7 +974,9 @@
 
             if (thisCheckpointARData) {
                 arVisionSection.style.display = 'block';
-                // No longer referencing arModelPreviewImage.src here as the element is removed.
+                arModelPreviewImage.src = thisCheckpointARData.arPreviewImage;
+                arModelPreviewImage.addEventListener('click', enterARExperience); // Added event listener to image
+                experienceArButton.style.display = 'none'; // Hide the button
             } else {
                 arVisionSection.style.display = 'none';
             }
