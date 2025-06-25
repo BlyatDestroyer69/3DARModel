@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkpoint [X] - Bukit Kiara AR World</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0; /* Remove body padding as container will manage it */
+            background-color: #f0f0f0;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+        /* Initial content view */
+        #initial-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+            margin-top: 50px;
+            text-align: center;
+            transition: opacity 0.5s ease-out;
+            opacity: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: calc(100vh - 100px); /* Adjust to fit viewport, considering margin */
+            box-sizing: border-box;
+        }
+
+        #initial-content.hidden {
+            opacity: 0;
+            pointer-events: none;
+            position: absolute; /* Take out of flow when hidden */
+            left: -9999px; /* Move off-screen */
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: #555;
+        }
+        .back-button {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-top: 30px;
+        }
+        .back-button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        .image-placeholder {
+            width: 100%;
+            max-width: 600px;
+            height: 300px;
+            background-color: #e0e0e0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #777;
+            font-style: italic;
+            margin: 25px auto;
+            overflow: hidden;
+        }
+        .image-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        /* Removed: #ar-model-preview { cursor: pointer; } */
+
+        /* AR Experience Styles */
+        #ar-experience {
+            position: fixed; /* Fixed to cover the entire screen */
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #222; /* Dark background for 3D */
+            transition: opacity 0.5s ease-out;
+            opacity: 0;
+            pointer-events: none; /* Initially not interactive */
+            z-index: 1; /* Below welcome screen, above initial content */
+        }
+
+        #ar-experience.visible {
+            opacity: 1;
+            pointer-events: all; /* Make interactive when visible */
+        }
+
+        #ar-canvas {
+            display: block;
+            width: 70% !important; /* Take 70% of the screen width */
+            height: 100% !important;
+            float: left; /* Position canvas to the left */
+            background-color: transparent; /* Allows scene.background to show */
+        }
+
+        #model-info-panel {
+            width: 30%; /* Take 30% of the screen width */
+            height: 100%;
+            background-color: rgba(30, 30, 30, 0.85);
+            color: white;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            overflow-y: auto; /* Enable scrolling for long content */
+            float: right; /* Position info panel to the right */
+        }
+        #model-info-panel h2 {
+            margin-top: 0;
+            color: #ADD8E6;
+            font-size: 1.8em;
+            border-bottom: 2px solid #ADD8E6;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        #model-info-panel p {
+            font-size: 1em;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            text-align: left; /* Align text to left */
+            color: #e0e0e0;
+        }
+        #ar-back-button {
+            display: inline-block;
+            background-color: #e74c3c; /* Red color for exit */
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-top: auto; /* Push to the bottom */
+            align-self: center; /* Center the button */
+        }
+        #ar-back-button:hover {
+            background-color: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        /* Experience AR Button */
+        #experience-ar-button {
+            background-color: #2ecc71; /* Green */
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.4em;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-top: 25px;
+        }
+        #experience-ar-button:hover {
+            background-color: #27ae60;
+            transform: translateY(-2px);
+        }
+
+        /* Language Toggle - NEW LOCATION inside AR experience */
+        #ar-language-toggle {
+            margin-top: 20px;
+            margin-bottom: 20px; /* Add margin below buttons */
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        #ar-language-toggle button {
+            background-color: #6c757d;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s ease;
+        }
+        #ar-language-toggle button.active {
+            background-color: #007bff;
+            font-weight: bold;
+        }
+        #ar-language-toggle button:hover:not(.active) {
+            background-color: #5a6268;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            #initial-content {
+                padding: 15px;
+                margin-top: 20px;
+            }
+            h1 {
+                font-size: 2em;
+            }
+            p {
+                font-size: 1em;
+            }
+            #experience-ar-button {
+                font-size: 1.2em;
+                padding: 12px 25px;
+            }
+
+            #ar-experience {
+                flex-direction: column; /* Stack canvas and info panel vertically */
+            }
+            #ar-canvas, #model-info-panel {
+                width: 100% !important; /* Full width */
+                float: none; /* Remove float */
+            }
+            #ar-canvas {
+                height: 60% !important; /* Canvas takes more space */
+            }
+            #model-info-panel {
+                height: 40% !important; /* Info panel takes less space */
+                padding: 15px;
+            }
+            #ar-language-toggle {
+                margin-top: 15px;
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/",
+                "tone": "https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"
+            }
+        }
+    </script>
+</head>
+<body>
+    <!-- Initial Checkpoint Content -->
+    <div id="initial-content">
+        <h1>Checkpoint [X]</h1>
+        <div class="image-placeholder">
+            <!-- You can replace this with an actual image -->
+            <img id="checkpoint-main-image" src="assets/checkpoint.jpg" alt="Featured Animal">
+        </div>
+        <p id="checkpoint-description-intro">
+            Welcome to Checkpoint [X]! Here, you'll embark on a journey to discover fascinating wildlife.
+            Get ready to learn about the incredible **[Specific Animal 1 Name]** and the amazing **[Specific Animal 2 Name]**.
+            Their unique behaviors and habitats are truly a sight to behold.
+            Prepare for your ultimate discovery!
+        </p>
+        <p>
+            Add more detailed information about the animals, their conservation status,
+            interesting facts, or even a short video embed here. Make it engaging!
+        </p>
+
+        <!-- New AR Vision Section -->
+        <div id="ar-vision-section" style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 30px; width: 100%; display: none;">
+            <h2>Experience with AR Vision</h2>
+            <p>Step into an immersive world and interact with a 3D model of our featured animal!</p>
+            <div class="image-placeholder" style="height: 200px;">
+                <!-- Placeholder for the AR model image - THIS IS NOW CLICKABLE -->
+                <img id="ar-model-preview" src="assets/colored_flower.jpg" alt="AR Model Preview">
+            </div>
+            <button id="experience-ar-button">Experience with AR</button>
+        </div>
+
+        <a href="index.html" class="back-button">Back to Map</a>
+    </div>
+
+    <!-- AR Experience Section (Initially Hidden) -->
+    <div id="ar-experience">
+        <canvas id="ar-canvas"></canvas>
+        <div id="model-info-panel">
+            <h2 id="ar-model-title"></h2>
+            <p id="ar-model-description"></p>
+
+            <!-- Language Toggle - MOVED HERE -->
+            <div id="ar-language-toggle">
+                <button id="ar-lang-en">English</button>
+                <button id="ar-lang-ja">Japanese</button>
+            </div>
+
+            <a href="#" id="ar-back-button">Exit AR Vision</a>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { Tone } from 'tone';
+
+        // --- Checkpoint specific data (YOU WILL CUSTOMIZE THESE PER PAGE) ---
+        const CHECKPOINT_NUMBER = [X]; // IMPORTANT: Change this for each checkpoint page (e.g., 1, 2, 3...)
+        const CHECKPOINT_TITLE = `Checkpoint ${CHECKPOINT_NUMBER}`;
+
+        // --- AR Content Data for the 5 models ---
+        const arContentData = {
+            1: { // Checkpoint 1: Colored Flower
+                arModelPath: 'models/colored_flower.glb',
+                audio: {
+                    en: 'audio/English (Colored Flower).mp3',
+                    ja: 'audio/Japanese (Colored Flower).mp3'
+                },
+                arModelTitle: "Colored Flower",
+                arModelDescription: `Explore the vibrant colors and unique structure of the Colored Flower. This fascinating plant plays a crucial role in its ecosystem, attracting various pollinators.`,
+                arPreviewImage: 'assets/colored_flower.jpg', // Specific preview image for this model
+                mainCheckpointImage: 'assets/checkpoint.jpg' // Example main image for Checkpoint 1
+            },
+            2: { // Checkpoint 2: Hairy Woodpecker (using woodpecker audio)
+                arModelPath: 'models/hairy_woodpecker.glb',
+                audio: {
+                    en: 'audio/English (Woodpecker).mp3',
+                    ja: 'audio/Japanese (Woodpecker).mp3'
+                },
+                arModelTitle: "Hairy Woodpecker",
+                arModelDescription: `Meet the Hairy Woodpecker, known for its distinctive drumming sound and its vital role in forest health. Learn about its foraging habits and how it excavates nests.`,
+                arPreviewImage: 'assets/woodpecker.jpg', // Specific preview image for this model
+                mainCheckpointImage: 'assets/checkpoint.jpg' // Example main image for Checkpoint 2
+            },
+            3: { // Checkpoint 3: Margarita Flower Bush
+                arModelPath: 'models/margarita_flower_bush.glb',
+                audio: {
+                    en: 'audio/English (Margarita).mp3',
+                    ja: 'audio/Japanese (Margarita).mp3'
+                },
+                arModelTitle: "Margarita Flower Bush",
+                arModelDescription: `Discover the charming Margarita Flower Bush, a popular plant that adds beauty to landscapes. Find out about its blooming season and care.`,
+                arPreviewImage: 'assets/margarita_flower.jpg', // Specific preview image for this model
+                mainCheckpointImage: 'assets/checkpoint.jpg' // Example main image for Checkpoint 3
+            },
+            4: { // Checkpoint 4: Snake Model
+                arModelPath: 'models/snake_model.glb',
+                audio: {
+                    en: 'audio/English (Snake).mp3',
+                    ja: 'audio/Japanese (Snake).mp3'
+                },
+                arModelTitle: "Snake Model",
+                arModelDescription: `Encounter the elusive Snake. Learn about different species, their habitats, and their important position in the food chain. Understand why these reptiles are often misunderstood.`,
+                arPreviewImage: 'assets/snake.jpg', // Specific preview image for this model
+                mainCheckpointImage: 'assets/checkpoint.jpg' // Example main image for Checkpoint 4
+            },
+            5: { // Checkpoint 5: Hiasan Pokok Kristal (Japanese Tree Crystal)
+                arModelPath: 'models/hiasan_pokok_kristal.glb',
+                audio: {
+                    en: 'audio/English (Japanese Tree Crystal).mp3',
+                    ja: 'audio/Japanese (Japanese Tree Crystal).mp3'
+                },
+                arModelTitle: "Japanese Tree Crystal",
+                arModelDescription: `Experience the mystical beauty of the Japanese Tree Crystal. Dive into its lore and the unique characteristics that make it a captivating natural wonder.`,
+                arPreviewImage: 'assets/pokok_kristal.jpg', // Specific preview image for this model
+                mainCheckpointImage: 'assets/checkpoint.jpg' // Example main image for Checkpoint 5
+            }
+            // Checkpoints 6-9 will NOT have an entry here, so their AR button will be hidden.
+        };
+
+        let currentLanguage = 'en'; // Default language
+
+        // Get specific AR content for this checkpoint, if it exists
+        const thisCheckpointARData = arContentData[CHECKPOINT_NUMBER];
+
+        // --- Tone.js for background audio ---
+        let audioPlayer; // Will hold our audio Tone.Player instance
+
+        async function playAudioForLanguage(language) {
+            stopBackgroundAudio(); // Stop any currently playing audio
+
+            if (thisCheckpointARData && thisCheckpointARData.audio[language]) {
+                const audioFilePath = thisCheckpointARData.audio[language];
+                if (Tone.context.state !== 'running') {
+                    await Tone.start();
+                }
+
+                audioPlayer = new Tone.Player(audioFilePath).toDestination();
+                audioPlayer.volume.value = -10; // Adjust volume (e.g., -10 dB)
+                audioPlayer.autostart = true; // Auto-play when loaded
+                audioPlayer.loop = false; // Intro audio typically does not loop
+                console.log(`Playing audio: ${audioFilePath}`);
+            } else {
+                console.warn(`No audio found for Checkpoint ${CHECKPOINT_NUMBER} in ${language}.`);
+            }
+        }
+
+        function stopBackgroundAudio() {
+            if (audioPlayer) {
+                audioPlayer.stop();
+                audioPlayer.dispose();
+                audioPlayer = null;
+                console.log("Audio stopped.");
+            }
+        }
+
+
+        // --- Three.js setup for AR Experience ---
+        let scene, camera, renderer, controls, gltfLoader;
+        let loadedArModel = null;
+        let animateId = null; // To store the requestAnimationFrame ID
+
+        // Get references to DOM elements once globally
+        const initialContentDiv = document.getElementById('initial-content');
+        const experienceArButton = document.getElementById('experience-ar-button');
+        const arVisionSection = document.getElementById('ar-vision-section');
+        const arModelPreviewImage = document.getElementById('ar-model-preview');
+        const arExperienceDiv = document.getElementById('ar-experience');
+        const arCanvas = document.getElementById('ar-canvas');
+        const modelInfoPanel = document.getElementById('model-info-panel');
+        const arModelTitle = document.getElementById('ar-model-title');
+        const arModelDescription = document.getElementById('ar-model-description');
+        const arBackButton = document.getElementById('ar-back-button');
+        const arLangEnButton = document.getElementById('ar-lang-en');
+        const arLangJaButton = document.getElementById('ar-lang-ja');
+
+
+        function initARExperience() {
+            // Set up scene, camera, renderer for the AR canvas
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x333333); // Dark background for the 3D model
+
+            camera = new THREE.PerspectiveCamera(75, arCanvas.clientWidth / arCanvas.clientHeight, 0.1, 1000);
+            camera.position.set(0, 0.5, 3); // Position the camera to view the model
+
+            renderer = new THREE.WebGLRenderer({ canvas: arCanvas, antialias: true });
+            renderer.setSize(arCanvas.clientWidth, arCanvas.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio); // Handle high-DPI screens
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.1;
+            controls.minDistance = 1;
+            controls.maxDistance = 10;
+            controls.autoRotate = true; // Auto-rotate the model
+            controls.autoRotateSpeed = 0.5;
+
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            directionalLight.position.set(5, 10, 7);
+            scene.add(directionalLight);
+
+            // Load the 3D model specific to this checkpoint
+            if (thisCheckpointARData && thisCheckpointARData.arModelPath) {
+                gltfLoader = new GLTFLoader();
+                gltfLoader.load(thisCheckpointARData.arModelPath, (gltf) => {
+                    loadedArModel = gltf.scene;
+                    loadedArModel.scale.set(1, 1, 1); // Adjust scale as needed for your model
+
+                    // Center the model in the scene
+                    const box = new THREE.Box3().setFromObject(loadedArModel);
+                    const center = box.getCenter(new THREE.Vector3());
+                    loadedArModel.position.sub(center);
+
+                    scene.add(loadedArModel);
+                }, undefined, (error) => {
+                    console.error('Error loading GLTF model:', error);
+                    // Handle model loading error gracefully, e.g., display a message
+                    arModelDescription.innerHTML = "Error loading 3D model. Please try again later.";
+                });
+            } else {
+                arModelDescription.innerHTML = "No 3D model available for this checkpoint.";
+                console.warn("No AR model path defined for this checkpoint.");
+            }
+
+            // Populate model info panel
+            arModelTitle.textContent = thisCheckpointARData ? thisCheckpointARData.arModelTitle : "Model Information";
+            arModelDescription.innerHTML = thisCheckpointARData ? thisCheckpointARData.arModelDescription : "No specific information available for this AR experience.";
+
+            // Start animation loop
+            animateAR();
+
+            // Handle window resizing for AR canvas
+            window.addEventListener('resize', onARWindowResize);
+        }
+
+        function animateAR() {
+            animateId = requestAnimationFrame(animateAR);
+            if (controls) controls.update(); // Only update if controls exist
+            if (renderer && scene && camera) renderer.render(scene, camera);
+        }
+
+        function onARWindowResize() {
+            if (camera && renderer && arCanvas) {
+                camera.aspect = arCanvas.clientWidth / arCanvas.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(arCanvas.clientWidth, arCanvas.clientHeight);
+            }
+        }
+
+        function disposeARExperience() {
+            // Stop animation loop
+            if (animateId) {
+                cancelAnimationFrame(animateId);
+                animateId = null;
+            }
+
+            // Dispose Three.js objects to free up memory
+            if (scene) {
+                scene.traverse(obj => {
+                    if (obj.isMesh) {
+                        if (obj.geometry) obj.geometry.dispose();
+                        if (obj.material) {
+                            // Dispose textures if they exist
+                            for (const key in obj.material) {
+                                const value = obj.material[key];
+                                if (value && typeof value.dispose === 'function') {
+                                    value.dispose();
+                                }
+                            }
+                            obj.material.dispose();
+                        }
+                    }
+                });
+                scene.clear();
+                scene = null;
+            }
+            if (renderer) {
+                renderer.dispose();
+                renderer = null;
+            }
+            if (controls) {
+                controls.dispose();
+                controls = null;
+            }
+            if (loadedArModel) {
+                loadedArModel.clear();
+                loadedArModel = null;
+            }
+
+            window.removeEventListener('resize', onARWindowResize);
+        }
+
+        // --- UI Transition Function (shared by button and image click) ---
+        async function enterARExperience() {
+            initialContentDiv.classList.add('hidden');
+            arExperienceDiv.classList.add('visible');
+            await initARExperience(); // Initialize and start 3D rendering
+        }
+
+        // --- Event Listeners ---
+        // Click listener for the main "Experience with AR" button
+        experienceArButton.addEventListener('click', enterARExperience);
+
+        // REMOVED: Click listener for the AR model preview image
+        // arModelPreviewImage.addEventListener('click', enterARExperience);
+
+
+        arBackButton.addEventListener('click', () => {
+            disposeARExperience();
+            stopBackgroundAudio();
+            arExperienceDiv.classList.remove('visible');
+            initialContentDiv.classList.remove('hidden');
+        });
+
+        // Language Toggle Logic (Now within AR experience)
+        function setLanguageAndPlayAudio(lang) {
+            currentLanguage = lang;
+            arLangEnButton.classList.remove('active');
+            arLangJaButton.classList.remove('active');
+            if (lang === 'en') {
+                arLangEnButton.classList.add('active');
+            } else if (lang === 'ja') {
+                arLangJaButton.classList.add('active');
+            }
+            console.log(`Language set to: ${currentLanguage}`);
+
+            if (thisCheckpointARData && thisCheckpointARData.audio[currentLanguage]) {
+                playAudioForLanguage(currentLanguage);
+            } else {
+                console.warn(`No audio file path defined for Checkpoint ${CHECKPOINT_NUMBER} in ${currentLanguage}.`);
+                stopBackgroundAudio();
+            }
+        }
+
+        arLangEnButton.addEventListener('click', () => setLanguageAndPlayAudio('en'));
+        arLangJaButton.addEventListener('click', () => setLanguageAndPlayAudio('ja'));
+
+
+        // Populate initial content dynamically and manage AR section visibility
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelector('h1').textContent = CHECKPOINT_TITLE;
+            document.title = CHECKPOINT_TITLE + " - Bukit Kiara AR World";
+
+            // Show AR section only if there is data for this checkpoint
+            if (thisCheckpointARData) {
+                arVisionSection.style.display = 'block';
+                // Dynamically set AR Preview Image source using data from arContentData
+                arModelPreviewImage.src = thisCheckpointARData.arPreviewImage;
+                document.getElementById('checkpoint-main-image').src = thisCheckpointARData.mainCheckpointImage;
+            } else {
+                arVisionSection.style.display = 'none'; // Hide if no AR content
+            }
+
+            // Set initial active language button for AR mode
+            if (currentLanguage === 'en') {
+                arLangEnButton.classList.add('active');
+            } else {
+                arLangJaButton.classList.add('active');
+            }
+        });
+
+    </script>
+</body>
+</html>
