@@ -26,10 +26,11 @@
             height: 100vh;
             display: block; /* Ensure it's rendered as a block element */
             opacity: 0; /* Initially hidden, will fade in after welcome screen */
-            transition: opacity 1s ease-in-out; /* Smooth transition for scene visibility */
+            transition: opacity 1s ease-in-out; /* Smooth transition */
         }
-        a-scene.visible {
-            opacity: 1; /* Make scene visible */
+
+        a-scene.active {
+            opacity: 1; /* Fully visible when active */
         }
 
         /* Welcome Screen Styles */
@@ -46,256 +47,309 @@
             justify-content: center;
             align-items: center;
             text-align: center;
-            z-index: 100; /* Ensure it's on top */
-            transition: opacity 1s ease-out; /* Smooth fade out */
+            z-index: 100; /* Ensure it's above other content */
+            transition: opacity 1s ease-in-out; /* Smooth fade out */
         }
+
         #welcome-screen.hidden {
             opacity: 0;
-            pointer-events: none; /* Disable interaction when hidden */
+            pointer-events: none; /* Make it unclickable when hidden */
         }
+
         #welcome-screen h1 {
             font-size: 3em;
             margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
+
         #welcome-screen p {
             font-size: 1.2em;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
             max-width: 600px;
-            line-height: 1.5;
+            line-height: 1.6;
         }
+
         #welcome-button {
-            background-color: #4CAF50; /* Green */
+            background-color: #2ecc71;
             color: white;
             padding: 15px 30px;
             border: none;
             border-radius: 8px;
-            font-size: 1.2em;
+            font-size: 1.5em;
             cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        #welcome-button:hover {
-            background-color: #45a049;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
 
-        /* Info Panel Styles */
+        #welcome-button:hover {
+            background-color: #27ae60;
+            transform: translateY(-2px);
+        }
+
+        /* Info Panel Styles (for checkpoint details) */
         #info-panel {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            width: 300px;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            z-index: 99; /* Below welcome screen, above AR scene */
-            display: none; /* Initially hidden */
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            z-index: 50; /* Above AR scene, below welcome screen */
+            display: none; /* Hidden by default */
             flex-direction: column;
+            align-items: center;
+            text-align: center;
+            max-width: 90%;
+            width: 400px;
             box-sizing: border-box;
-            max-height: calc(100vh - 20px);
-            overflow-y: auto;
         }
+
         #info-panel h2 {
+            color: #2c3e50;
             margin-top: 0;
-            font-size: 1.5em;
             margin-bottom: 10px;
-            color: #ADD8E6; /* Light Blue */
+            font-size: 1.8em;
         }
+
         #info-panel p {
-            font-size: 0.9em;
-            line-height: 1.4;
-            margin-bottom: 15px;
+            color: #555;
+            font-size: 1em;
+            margin-bottom: 20px;
+            line-height: 1.5;
         }
-        #info-panel button {
+
+        .info-panel-buttons button {
             background-color: #3498db;
             color: white;
-            padding: 10px 15px;
+            padding: 10px 20px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 1em;
+            margin: 0 10px;
             transition: background-color 0.3s ease;
         }
-        #info-panel button:hover {
+
+        .info-panel-buttons button:hover {
             background-color: #2980b9;
         }
-        .close-button {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5em;
-            cursor: pointer;
+
+        #close-info-panel, #go-to-checkpoint {
+            background-color: #e74c3c;
         }
 
-        /* Style for the cursor */
-        #cursor {
-            pointer-events: none; /* Ensures cursor itself doesn't block clicks */
+        #close-info-panel:hover, #go-to-checkpoint:hover {
+            background-color: #c0392b;
         }
-        /* Mobile responsive adjustments for info panel */
+
+        #go-to-checkpoint {
+            background-color: #2ecc71;
+        }
+
+        #go-to-checkpoint:hover {
+            background-color: #27ae60;
+        }
+
+        /* Responsive adjustments */
         @media (max-width: 768px) {
+            #welcome-screen h1 {
+                font-size: 2.2em;
+            }
+
+            #welcome-screen p {
+                font-size: 1em;
+                margin-bottom: 30px;
+            }
+
+            #welcome-button {
+                padding: 12px 25px;
+                font-size: 1.2em;
+            }
+
             #info-panel {
-                width: calc(100% - 20px); /* Full width minus padding */
-                left: 10px;
-                top: 50%; /* Position roughly in the middle vertically */
-                transform: translateY(-50%);
-                padding: 15px;
+                padding: 15px 20px;
+                width: 95%;
+            }
+
+            #info-panel h2 {
+                font-size: 1.5em;
+            }
+
+            .info-panel-buttons button {
+                padding: 8px 15px;
+                font-size: 0.9em;
+                margin: 0 5px;
             }
         }
     </style>
 </head>
 <body>
     <div id="welcome-screen">
-        <h1>Welcome to Bukit Kiara AR World</h1>
-        <p>Explore the natural beauty of Bukit Kiara like never before. Use Augmented Reality to discover hidden gems and learn about the environment.</p>
-        <button id="welcome-button">Start Exploring</button>
+        <h1>Welcome to Bukit Kiara AR World!</h1>
+        <p>Embark on an augmented reality adventure through Bukit Kiara. Explore its hidden wonders and learn about its vibrant ecosystem.</p>
+        <button id="welcome-button">Enter Experience</button>
     </div>
 
     <a-scene
-        id="ar-scene"
+        id="main-ar-scene"
+        mindar-image="imageTargetSrc: ./assets/targets.mind; filterMinCF:0.0001; filterBeta: 0.001; warmupTolerance: 0.1; missTolerance: 0.5;"
         vr-mode-ui="enabled: false"
-        renderer="logarithmicDepthBuffer: true;"
-        mindar-image="imageTargetSrc: ./assets/targets.mind; filterMinCF:0.0001; filterBeta: 0.001; warmupTolerance: 0.1; missTolerance: 0.5;">
+        device-orientation-permission-ui="enabled: false"
+        visible="false"
+    >
         <a-assets>
-            <a-asset-item id="map-model-asset" src="./models/map_model.glb"></a-asset-item>
+            <a-asset-item id="map-model" src="./models/bukit_kiara_map.glb"></a-asset-item>
         </a-assets>
 
         <a-entity mindar-image-target="targetIndex: 0">
-            <a-entity id="ar-map-gltf-container" scale="0 0 0" position="0 -1 0">
+            <a-entity id="map-3d-model-container" visible="false">
+                <a-gltf-model
+                    id="map-gltf"
+                    rotation="90 0 0"
+                    position="0 0 0"
+                    scale="0.2 0.2 0.2"
+                    src="#map-model"
+                    animation-mixer="clip: *; loop: repeat; clampWhenFinished: true;"
+                ></a-gltf-model>
+
+                <a-sphere
+                    data-checkpoint-id="1"
+                    position="-0.025 0 0.025"
+                    radius="0.008"
+                    color="#FF0000"
+                    opacity="0.8"
+                    material="shader: flat; transparent: true; alphaTest: 0.1;"
+                    class="checkpoint-marker"
+                ></a-sphere>
+
+                <a-sphere
+                    data-checkpoint-id="2"
+                    position="0.05 0 0.01"
+                    radius="0.008"
+                    color="#00FF00"
+                    opacity="0.8"
+                    material="shader: flat; transparent: true; alphaTest: 0.1;"
+                    class="checkpoint-marker"
+                ></a-sphere>
+
+                 <a-sphere
+                    data-checkpoint-id="3"
+                    position="0.02 0 -0.03"
+                    radius="0.008"
+                    color="#0000FF"
+                    opacity="0.8"
+                    material="shader: flat; transparent: true; alphaTest: 0.1;"
+                    class="checkpoint-marker"
+                ></a-sphere>
+
+                 <a-sphere
+                    data-checkpoint-id="4"
+                    position="-0.04 0 -0.015"
+                    radius="0.008"
+                    color="#FFFF00"
+                    opacity="0.8"
+                    material="shader: flat; transparent: true; alphaTest: 0.1;"
+                    class="checkpoint-marker"
+                ></a-sphere>
+
+                 <a-sphere
+                    data-checkpoint-id="5"
+                    position="0.0 0 0.04"
+                    radius="0.008"
+                    color="#FF00FF"
+                    opacity="0.8"
+                    material="shader: flat; transparent: true; alphaTest: 0.1;"
+                    class="checkpoint-marker"
+                ></a-sphere>
+
                 </a-entity>
-            </a-entity>
+        </a-entity>
 
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
     </a-scene>
 
     <div id="info-panel">
-        <button class="close-button" id="close-info-panel">X</button>
         <h2 id="info-panel-title"></h2>
         <p id="info-panel-description"></p>
-        <button id="go-to-checkpoint">Go to Checkpoint</button>
+        <div class="info-panel-buttons">
+            <button id="go-to-checkpoint">Enter Checkpoint Experience</button>
+            <button id="close-info-panel">Close</button>
+        </div>
     </div>
 
-    <script type="module">
-        // Data for your checkpoints, adapted for A-Frame positioning
-        // IMPORTANT: You will need to adjust these 'position' values (x, y, z)
-        // based on the scale and origin of your 'map_model.glb' and where you want
-        // the checkpoints to appear *relative to the loaded map*.
-        // 'y' value typically represents height above the map.
+    <script>
+        // Checkpoint data (same as before, ensure URLs match your checkpoint pages)
         const CHECKPOINTS_DATA = [
-            { id: 1, position: { x: 0.5, y: 0.1, z: 0 }, url: 'checkpoint_1.html?checkpointId=1', name: 'Checkpoint 1: The Mystical Flower', description: 'Discover the vibrant colors of this unique flora.' },
-            { id: 2, position: { x: -0.3, y: 0.1, z: 0.2 }, url: 'checkpoint_1.html?checkpointId=2', name: 'Checkpoint 2: Woodpecker\'s Perch', description: 'Observe the elusive Hairy Woodpecker in its natural habitat.' },
-            { id: 3, position: { x: 0, y: 0.1, z: -0.4 }, url: 'checkpoint_1.html?checkpointId=3', name: 'Checkpoint 3: Margarita Meadows', description: 'A beautiful expanse of Margarita Flower Bushes.' },
-            { id: 4, position: { x: -0.6, y: 0.1, z: -0.1 }, url: 'checkpoint_1.html?checkpointId=4', name: 'Checkpoint 4: Serpent\'s Slumber', description: 'Learn about the fascinating reptiles inhabiting this area.' },
-            { id: 5, position: { x: 0.2, y: 0.1, z: 0.4 }, url: 'checkpoint_1.html?checkpointId=5', name: 'Checkpoint 5: Crystal Tree Haven', description: 'Uncover the legends of the Japanese Tree Crystal.' }
+            { id: 1, name: 'Checkpoint 1: The Mystical Flower', description: 'A vibrant floral spot.', url: 'checkpoint_1.html?checkpointId=1' },
+            { id: 2, name: 'Checkpoint 2: Woodpecker\'s Perch', description: 'Home to the elusive woodpecker.', url: 'checkpoint_1.html?checkpointId=2' },
+            { id: 3, name: 'Checkpoint 3: Margarita Meadows', description: 'A beautiful expanse of Margarita Flower Bushes.', url: 'checkpoint_1.html?checkpointId=3' },
+            { id: 4, name: 'Checkpoint 4: Serpent\'s Slumber', description: 'Learn about the fascinating reptiles inhabiting this area.', url: 'checkpoint_1.html?checkpointId=4' },
+            { id: 5, name: 'Checkpoint 5: Crystal Tree Haven', description: 'Uncover the legends of the Japanese Tree Crystal.', url: 'checkpoint_1.html?checkpointId=5' },
+            // Add more checkpoints as needed
         ];
 
-        let currentCheckpointId = null; // Store the ID of the currently selected checkpoint
-
-        // Get references to DOM elements
+        // Get DOM elements
         const welcomeScreen = document.getElementById('welcome-screen');
         const welcomeButton = document.getElementById('welcome-button');
-        const arScene = document.getElementById('ar-scene'); // The A-Frame scene
+        const mainArScene = document.getElementById('main-ar-scene');
+        const map3DModelContainer = document.getElementById('map-3d-model-container');
         const infoPanel = document.getElementById('info-panel');
-        const closeInfoPanelButton = document.getElementById('close-info-panel');
         const infoPanelTitle = document.getElementById('info-panel-title');
         const infoPanelDescription = document.getElementById('info-panel-description');
+        const closeInfoPanelButton = document.getElementById('close-info-panel');
         const goToCheckpointButton = document.getElementById('go-to-checkpoint');
+        let currentCheckpointId = null;
 
-        let arMapGltfContainer; // Reference to the A-Frame entity that will hold the GLTF model
+        // Function to display the info panel for a checkpoint
+        function displayInfoPanel(checkpoint) {
+            infoPanelTitle.textContent = checkpoint.name;
+            infoPanelDescription.textContent = checkpoint.description;
+            currentCheckpointId = checkpoint.id;
+            infoPanel.style.display = 'flex'; // Show the info panel
+        }
+
+        // Function to hide the info panel
+        function hideInfoPanel() {
+            infoPanel.style.display = 'none'; // Hide the info panel
+            currentCheckpointId = null;
+        }
+
+        // Event listener for the "Enter Experience" (Welcome) button
+        welcomeButton.addEventListener('click', () => {
+            welcomeScreen.classList.add('hidden'); // Fade out the welcome screen
+            // After fade out, activate the AR scene
+            welcomeScreen.addEventListener('transitionend', () => {
+                mainArScene.setAttribute('visible', 'true'); // Activate the A-Frame scene (and camera)
+                mainArScene.classList.add('active'); // Apply active class for opacity transition
+                console.log("AR Scene Activated. Please scan the map target.");
+            }, { once: true }); // Ensure this runs only once
+        });
 
         document.addEventListener('DOMContentLoaded', () => {
-            arMapGltfContainer = document.getElementById('ar-map-gltf-container');
+            // Event listeners for targetFound and targetLost
+            const mindarImageTargetEntity = document.querySelector('a-entity[mindar-image-target]');
+            if (mindarImageTargetEntity) {
+                mindarImageTargetEntity.addEventListener('targetFound', () => {
+                    console.log("Map Target Found! Displaying 3D map model.");
+                    map3DModelContainer.setAttribute('visible', 'true'); // Show the 3D map model
+                });
 
-            // --- Welcome Screen Logic ---
-            welcomeButton.addEventListener('click', () => {
-                welcomeScreen.classList.add('hidden'); // Fade out welcome screen
-                // After welcome screen hides, fade in the AR scene to activate camera
-                setTimeout(() => {
-                    arScene.classList.add('visible'); // Make AR scene visible
-                    // MindAR automatically starts the camera when the a-scene is initialized and visible
-                    console.log("Welcome screen hidden, AR scene fading in.");
-                }, 1000); // Duration matches CSS transition for smoother fade
-            });
+                mindarImageTargetEntity.addEventListener('targetLost', () => {
+                    console.log("Map Target Lost! Hiding 3D map model.");
+                    map3DModelContainer.setAttribute('visible', 'false'); // Hide the 3D map model
+                    hideInfoPanel(); // Also hide info panel if target is lost
+                });
+            } else {
+                console.error("MindAR image target entity not found. Is your A-Frame scene correctly structured?");
+            }
 
-            // --- MindAR Image Target Logic ---
-            // Note: MindAR uses the 'found' and 'lost' events directly on the a-entity with mindar-image-target
-            const mindarImageTargetEntity = document.querySelector('[mindar-image-target]');
-
-            mindarImageTargetEntity.addEventListener('targetFound', () => {
-                console.log("Image target found! Loading map model and checkpoints.");
-
-                // Check if the map model is already loaded to prevent duplicates
-                if (!arMapGltfContainer.querySelector('a-gltf-model')) {
-                    const mapModel = document.createElement('a-gltf-model');
-                    mapModel.setAttribute('src', '#map-model-asset');
-                    // Adjust scale and rotation here to fit your marker and model's orientation.
-                    // Common GLTF models are Y-up, so -90 on X-axis for rotation is common to align with marker.
-                    mapModel.setAttribute('scale', '0.01 0.01 0.01'); // Start at a tiny scale before emerging
-                    mapModel.setAttribute('rotation', '-90 0 0'); // Example rotation, adjust if your model's orientation is different
-
-                    arMapGltfContainer.appendChild(mapModel);
-
-                    // Add an animation for the map model to "emerge"
-                    // Animates from a smaller scale (0.01) to its final scale (e.g., 0.5)
-                    // and from below (-0.5 on y-axis) to its final position (0 on y-axis)
-                    const emergeScaleAnimation = document.createElement('a-animation');
-                    emergeScaleAnimation.setAttribute('attribute', 'scale');
-                    emergeScaleAnimation.setAttribute('from', '0.01 0.01 0.01'); // Starting scale (very small)
-                    emergeScaleAnimation.setAttribute('to', '0.5 0.5 0.5'); // Target scale of your map, adjust this!
-                    emergeScaleAnimation.setAttribute('dur', '1800'); // Duration in milliseconds
-                    emergeScaleAnimation.setAttribute('easing', 'ease-out-elastic'); // Smooth, bouncy emergence
-                    arMapGltfContainer.appendChild(emergeScaleAnimation);
-
-                    const emergePositionAnimation = document.createElement('a-animation');
-                    emergePositionAnimation.setAttribute('attribute', 'position');
-                    emergePositionAnimation.setAttribute('from', '0 -0.5 0'); // Start slightly below the marker
-                    emergePositionAnimation.setAttribute('to', '0 0 0'); // End at the marker's surface
-                    emergePositionAnimation.setAttribute('dur', '1800'); // Same duration as scale for sync
-                    emergePositionAnimation.setAttribute('easing', 'ease-out-elastic');
-                    arMapGltfContainer.appendChild(emergePositionAnimation);
-
-
-                    // Add ambient light to the scene for better model visibility
-                    const ambientLight = document.createElement('a-entity');
-                    ambientLight.setAttribute('light', 'type: ambient; color: #BBB; intensity: 0.8');
-                    mindarImageTargetEntity.appendChild(ambientLight);
-
-                    // Add a directional light for shadows and definition
-                    const directionalLight = document.createElement('a-entity');
-                    directionalLight.setAttribute('light', 'type: directional; color: #FFF; intensity: 0.6; castShadow: true;');
-                    directionalLight.setAttribute('position', '1 2 1'); // Position relative to marker
-                    mindarImageTargetEntity.appendChild(directionalLight);
-
-                    // After the map model is loaded, dynamically add checkpoint spheres
-                    mapModel.addEventListener('model-loaded', () => {
-                        CHECKPOINTS_DATA.forEach(cp => {
-                            const checkpointSphere = document.createElement('a-sphere');
-                            checkpointSphere.setAttribute('position', `${cp.position.x} ${cp.position.y} ${cp.position.z}`);
-                            checkpointSphere.setAttribute('radius', '0.05'); // Adjust radius based on your map scale
-                            checkpointSphere.setAttribute('color', '#FF0000'); // Red for visibility
-                            checkpointSphere.setAttribute('opacity', '0.7');
-                            checkpointSphere.setAttribute('id', `checkpoint-${cp.id}`); // Unique ID
-                            checkpointSphere.setAttribute('data-checkpoint-id', cp.id); // Custom data attribute for easy lookup
-                            checkpointSphere.setAttribute('class', 'checkpoint-sphere'); // Class for raycaster
-
-                            arMapGltfContainer.appendChild(checkpointSphere);
-                        });
-                        console.log("Checkpoints added to AR map after model loaded.");
-                    });
-                }
-            });
-
-            mindarImageTargetEntity.addEventListener('targetLost', () => {
-                console.log("Image target lost! Hiding info panel.");
-                hideInfoPanel(); // Hide info panel if map disappears from view
-            });
-
-            // --- Checkpoint Interaction in AR Scene ---
-            // A-Frame uses a unified click event on the scene, then delegates
-            arScene.addEventListener('click', (evt) => {
-                // Check if the clicked element has the 'checkpoint-sphere' class
-                if (evt.target.classList.contains('checkpoint-sphere')) {
-                    const checkpointId = evt.target.getAttribute('data-checkpoint-id');
+            // Event listener for checkpoint markers
+            mainArScene.addEventListener('click', (evt) => {
+                const clickedEntity = evt.detail.intersection && evt.detail.intersection.object.el;
+                if (clickedEntity && clickedEntity.classList.contains('checkpoint-marker')) {
+                    const checkpointId = clickedEntity.getAttribute('data-checkpoint-id');
                     const checkpoint = CHECKPOINTS_DATA.find(cp => cp.id == checkpointId);
                     if (checkpoint) {
                         displayInfoPanel(checkpoint);
@@ -304,9 +358,8 @@
                 }
             });
 
-            // --- Info Panel Logic ---
+            // Info Panel button listeners
             closeInfoPanelButton.addEventListener('click', hideInfoPanel);
-
             goToCheckpointButton.addEventListener('click', () => {
                 if (currentCheckpointId !== null) {
                     const checkpoint = CHECKPOINTS_DATA.find(cp => cp.id === currentCheckpointId);
@@ -315,18 +368,6 @@
                     }
                 }
             });
-
-            function displayInfoPanel(checkpoint) {
-                infoPanelTitle.textContent = checkpoint.name;
-                infoPanelDescription.textContent = checkpoint.description;
-                currentCheckpointId = checkpoint.id;
-                infoPanel.style.display = 'flex'; // Show the info panel
-            }
-
-            function hideInfoPanel() {
-                infoPanel.style.display = 'none'; // Hide the info panel
-                currentCheckpointId = null;
-            }
         });
     </script>
 </body>
