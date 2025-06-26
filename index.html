@@ -86,7 +86,7 @@
             transform: translateY(-2px);
         }
 
-        /* Info Panel Styles (for checkpoint details) */
+        /* Info Panel Styles (for checkpoint details) - This panel is now largely unused in this specific AR scene */
         #info-panel {
             position: absolute;
             bottom: 20px;
@@ -214,56 +214,6 @@
                     animation-mixer="clip: *; loop: repeat; clampWhenFinished: true;"
                 ></a-gltf-model>
 
-                <a-sphere
-                    data-checkpoint-id="1"
-                    position="-0.025 0 0.025"
-                    radius="0.008"
-                    color="#FF0000"
-                    opacity="0.8"
-                    material="shader: flat; transparent: true; alphaTest: 0.1;"
-                    class="checkpoint-marker"
-                ></a-sphere>
-
-                <a-sphere
-                    data-checkpoint-id="2"
-                    position="0.05 0 0.01"
-                    radius="0.008"
-                    color="#00FF00"
-                    opacity="0.8"
-                    material="shader: flat; transparent: true; alphaTest: 0.1;"
-                    class="checkpoint-marker"
-                ></a-sphere>
-
-                 <a-sphere
-                    data-checkpoint-id="3"
-                    position="0.02 0 -0.03"
-                    radius="0.008"
-                    color="#0000FF"
-                    opacity="0.8"
-                    material="shader: flat; transparent: true; alphaTest: 0.1;"
-                    class="checkpoint-marker"
-                ></a-sphere>
-
-                 <a-sphere
-                    data-checkpoint-id="4"
-                    position="-0.04 0 -0.015"
-                    radius="0.008"
-                    color="#FFFF00"
-                    opacity="0.8"
-                    material="shader: flat; transparent: true; alphaTest: 0.1;"
-                    class="checkpoint-marker"
-                ></a-sphere>
-
-                 <a-sphere
-                    data-checkpoint-id="5"
-                    position="0.0 0 0.04"
-                    radius="0.008"
-                    color="#FF00FF"
-                    opacity="0.8"
-                    material="shader: flat; transparent: true; alphaTest: 0.1;"
-                    class="checkpoint-marker"
-                ></a-sphere>
-
                 </a-entity>
         </a-entity>
 
@@ -280,7 +230,7 @@
     </div>
 
     <script>
-        // Checkpoint data (same as before, ensure URLs match your checkpoint pages)
+        // Checkpoint data (this data is still defined but won't be used for sphere clicks in this scene)
         const CHECKPOINTS_DATA = [
             { id: 1, name: 'Checkpoint 1: The Mystical Flower', description: 'A vibrant floral spot.', url: 'checkpoint_1.html?checkpointId=1' },
             { id: 2, name: 'Checkpoint 2: Woodpecker\'s Perch', description: 'Home to the elusive woodpecker.', url: 'checkpoint_1.html?checkpointId=2' },
@@ -302,7 +252,7 @@
         const goToCheckpointButton = document.getElementById('go-to-checkpoint');
         let currentCheckpointId = null;
 
-        // Function to display the info panel for a checkpoint
+        // Function to display the info panel for a checkpoint (still exists, but won't be called by spheres)
         function displayInfoPanel(checkpoint) {
             infoPanelTitle.textContent = checkpoint.name;
             infoPanelDescription.textContent = checkpoint.description;
@@ -310,7 +260,7 @@
             infoPanel.style.display = 'flex'; // Show the info panel
         }
 
-        // Function to hide the info panel
+        // Function to hide the info panel (still exists)
         function hideInfoPanel() {
             infoPanel.style.display = 'none'; // Hide the info panel
             currentCheckpointId = null;
@@ -345,7 +295,9 @@
                 console.error("MindAR image target entity not found. Is your A-Frame scene correctly structured?");
             }
 
-            // Event listener for checkpoint markers
+            // The click listener for checkpoint markers is now effectively useless
+            // as there are no spheres with class="checkpoint-marker" anymore.
+            // You could remove this block if you're sure you don't need it.
             mainArScene.addEventListener('click', (evt) => {
                 const clickedEntity = evt.detail.intersection && evt.detail.intersection.object.el;
                 if (clickedEntity && clickedEntity.classList.contains('checkpoint-marker')) {
@@ -358,7 +310,7 @@
                 }
             });
 
-            // Info Panel button listeners
+            // Info Panel button listeners (still useful if you plan to trigger the panel differently later)
             closeInfoPanelButton.addEventListener('click', hideInfoPanel);
             goToCheckpointButton.addEventListener('click', () => {
                 if (currentCheckpointId !== null) {
