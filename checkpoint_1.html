@@ -70,7 +70,9 @@
             text-decoration: none;
             font-weight: 600;
             transition: background-color 0.3s ease, transform 0.2s ease;
-            margin-top: 30px;
+            /* UPDATED: Reduced vertical margins for tighter integration */
+            margin-top: 20px; 
+            margin-bottom: 20px; 
             position: relative; /* IMPORTANT: Required for z-index to work */
             z-index: 10; /* IMPORTANT: Ensure buttons are on top of other content */
             pointer-events: all; /* IMPORTANT: Explicitly enable clicks */
@@ -315,6 +317,8 @@
             Prepare for your ultimate discovery!
         </p>
 
+        <a href="index.html" class="back-button">Back to Map</a>
+
         <div id="ar-vision-section"> <h2>Experience with AR Vision</h2>
             <p>Step into an immersive world and interact with a 3D model of our featured animal!</p>
             <div class="image-placeholder" style="height: 200px; cursor: pointer;">
@@ -322,7 +326,6 @@
             </div>
             </div>
 
-        <a href="index.html" class="back-button">Back to Map</a>
     </div>
 
     <div id="ar-experience">
