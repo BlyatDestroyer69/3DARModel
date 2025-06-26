@@ -831,8 +831,8 @@
                         // Request 'immersive-ar' session
                         const session = await navigator.xr.requestSession('immersive-ar', {
                             requiredFeatures: ['local-floor', 'hit-test'],
-                            optionalFeatures: ['dom-overlay'],
-                            domOverlay: { root: arExperienceDiv }
+                            // optionalFeatures: ['dom-overlay'],
+                            // domOverlay: { root: arExperienceDiv }
                         });
                         console.log("WebXR immersive-ar session requested.");
                         await initWebXR(session);
