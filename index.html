@@ -200,7 +200,7 @@
         visible="false"
     >
         <a-assets>
-            <a-asset-item id="map-model" src="./models/BukitKiaraMap.fbx"></a-asset-item>
+            <a-asset-item id="map-model" src="./models/bukit_kiara_map.glb"></a-asset-item>
         </a-assets>
 
         <a-entity mindar-image-target="targetIndex: 0">
@@ -362,7 +362,7 @@
             closeInfoPanelButton.addEventListener('click', hideInfoPanel);
             goToCheckpointButton.addEventListener('click', () => {
                 if (currentCheckpointId !== null) {
-                    const checkpoint = CHECKPOINTS_DATA.find(cp => cp.id === currentCheckpointId);
+                    const checkpoint = CHECKPOINT_DATA.find(cp => cp.id === currentCheckpointId);
                     if (checkpoint) {
                         window.location.href = checkpoint.url; // Navigate to checkpoint page
                     }
