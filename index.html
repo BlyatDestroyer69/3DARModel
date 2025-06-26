@@ -5,18 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bukit Kiara AR World</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.1/dist/mindar-image-aframe.prod.js"></script>
+
     <style>
         body {
             margin: 0;
-            overflow: hidden;
+            overflow: hidden; /* Important for AR scene to fill screen */
             font-family: 'Inter', sans-serif;
             background-color: #f0f0f0;
         }
 
-        canvas {
-            display: block;
+        /* The A-Frame scene will fill the screen */
+        a-scene {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100vw;
             height: 100vh;
+            display: block; /* Ensure it's rendered as a block element */
+            opacity: 0; /* Initially hidden, will fade in after welcome screen */
+            transition: opacity 1s ease-in-out; /* Smooth transition */
+        }
+
+        a-scene.active {
+            opacity: 1; /* Fully visible when active */
         }
 
         /* Welcome Screen Styles */
@@ -33,354 +47,327 @@
             justify-content: center;
             align-items: center;
             text-align: center;
-            z-index: 100; /* Ensure it's on top of everything */
-            opacity: 1;
-            transition: opacity 1s ease-out;
+            z-index: 100; /* Ensure it's above other content */
+            transition: opacity 1s ease-in-out; /* Smooth fade out */
         }
 
         #welcome-screen.hidden {
             opacity: 0;
-            pointer-events: none; /* Make it unclickable after fading */
+            pointer-events: none; /* Make it unclickable when hidden */
         }
 
         #welcome-screen h1 {
-            font-size: 4em;
+            font-size: 3em;
             margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
-            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         #welcome-screen p {
-            font-size: 1.5em;
+            font-size: 1.2em;
             margin-bottom: 40px;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            line-height: 1.6;
         }
 
         #welcome-button {
-            background-color: #f1c40f; /* Yellow */
-            color: #2c3e50; /* Dark blue-grey */
-            padding: 15px 40px;
+            background-color: #2ecc71;
+            color: white;
+            padding: 15px 30px;
             border: none;
-            border-radius: 30px;
-            font-size: 1.8em;
-            font-weight: 700;
+            border-radius: 8px;
+            font-size: 1.5em;
             cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-            text-transform: uppercase;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
 
         #welcome-button:hover {
-            background-color: #f39c12; /* Darker yellow/orange */
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            background-color: #27ae60;
+            transform: translateY(-2px);
         }
 
-        /* Info Panel Styles (existing) */
+        /* Info Panel Styles (for checkpoint details) */
         #info-panel {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(45, 45, 45, 0.9);
-            color: white;
-            padding: 15px;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
             border-radius: 12px;
-            display: none; /* Initially hidden */
-            z-index: 10;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            max-width: 320px;
-            transition: opacity 0.3s ease-in-out;
-            opacity: 0;
-            pointer-events: none;
-            transform: translate(-50%, -100%);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            z-index: 50; /* Above AR scene, below welcome screen */
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            max-width: 90%;
+            width: 400px;
+            box-sizing: border-box;
         }
 
-        #info-panel.visible {
-            opacity: 1;
-            display: block;
-        }
-
-        #info-panel h3 {
+        #info-panel h2 {
+            color: #2c3e50;
             margin-top: 0;
-            margin-bottom: 8px;
-            font-size: 1.2em;
-            color: #ADD8E6;
+            margin-bottom: 10px;
+            font-size: 1.8em;
         }
 
         #info-panel p {
-            margin-bottom: 0;
-            font-size: 0.95em;
-            line-height: 1.4;
+            color: #555;
+            font-size: 1em;
+            margin-bottom: 20px;
+            line-height: 1.5;
         }
 
-        #info-panel a {
-            color: #87CEEB;
-            text-decoration: none;
-            font-weight: bold;
-            display: block;
-            margin-top: 8px;
+        .info-panel-buttons button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 0 10px;
+            transition: background-color 0.3s ease;
         }
 
-        #info-panel a:hover {
-            color: #C1E8FF;
-            text-decoration: underline;
+        .info-panel-buttons button:hover {
+            background-color: #2980b9;
         }
-    </style>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
-                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+        #close-info-panel, #go-to-checkpoint {
+            background-color: #e74c3c;
+        }
+
+        #close-info-panel:hover, #go-to-checkpoint:hover {
+            background-color: #c0392b;
+        }
+
+        #go-to-checkpoint {
+            background-color: #2ecc71;
+        }
+
+        #go-to-checkpoint:hover {
+            background-color: #27ae60;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            #welcome-screen h1 {
+                font-size: 2.2em;
+            }
+
+            #welcome-screen p {
+                font-size: 1em;
+                margin-bottom: 30px;
+            }
+
+            #welcome-button {
+                padding: 12px 25px;
+                font-size: 1.2em;
+            }
+
+            #info-panel {
+                padding: 15px 20px;
+                width: 95%;
+            }
+
+            #info-panel h2 {
+                font-size: 1.5em;
+            }
+
+            .info-panel-buttons button {
+                padding: 8px 15px;
+                font-size: 0.9em;
+                margin: 0 5px;
             }
         }
-    </script>
+    </style>
 </head>
 <body>
-    <!-- Welcome Screen -->
     <div id="welcome-screen">
-        <h1>Welcome to Bukit Kiara AR World</h1>
-        <p>Embark on an interactive journey to discover amazing wildlife!</p>
+        <h1>Welcome to Bukit Kiara AR World!</h1>
+        <p>Embark on an augmented reality adventure through Bukit Kiara. Explore its hidden wonders and learn about its vibrant ecosystem.</p>
         <button id="welcome-button">Enter Experience</button>
     </div>
 
-    <!-- Info Panel (remains the same) -->
+    <a-scene
+        id="main-ar-scene"
+        mindar-image="imageTargetSrc: ./assets/targets.mind; filterMinCF:0.0001; filterBeta: 0.001; warmupTolerance: 0.1; missTolerance: 0.5;"
+        vr-mode-ui="enabled: false"
+        device-orientation-permission-ui="enabled: false"
+        visible="false"
+    >
+        <a-assets>
+            <a-asset-item id="map-model" src="./models/BukitKiaraMap.fbx"></a-asset-item>
+        </a-assets>
+
+        <a-entity mindar-image-target="targetIndex: 0">
+            <a-entity id="map-3d-model-container" visible="false">
+                <a-gltf-model
+                    id="map-gltf"
+                    rotation="90 0 0"
+                    position="0 0 0"
+                    scale="0.2 0.2 0.2"
+                    src="#map-model"
+                    animation-mixer="clip: *; loop: repeat; clampWhenFinished: true;"
+                ></a-gltf-model>
+
+                <a-sphere
+                    data-checkpoint-id="1"
+                    position="-0.025 0 0.025"
+                    radius="0.008"
+                    color="#FF0000"
+                    opacity="0.8"
+                    material="shader: flat; transparent: true; alphaTest: 0.1;"
+                    class="checkpoint-marker"
+                ></a-sphere>
+
+                <a-sphere
+                    data-checkpoint-id="2"
+                    position="0.05 0 0.01"
+                    radius="0.008"
+                    color="#00FF00"
+                    opacity="0.8"
+                    material="shader: flat; transparent: true; alphaTest: 0.1;"
+                    class="checkpoint-marker"
+                ></a-sphere>
+
+                 <a-sphere
+                    data-checkpoint-id="3"
+                    position="0.02 0 -0.03"
+                    radius="0.008"
+                    color="#0000FF"
+                    opacity="0.8"
+                    material="shader: flat; transparent: true; alphaTest: 0.1;"
+                    class="checkpoint-marker"
+                ></a-sphere>
+
+                 <a-sphere
+                    data-checkpoint-id="4"
+                    position="-0.04 0 -0.015"
+                    radius="0.008"
+                    color="#FFFF00"
+                    opacity="0.8"
+                    material="shader: flat; transparent: true; alphaTest: 0.1;"
+                    class="checkpoint-marker"
+                ></a-sphere>
+
+                 <a-sphere
+                    data-checkpoint-id="5"
+                    position="0.0 0 0.04"
+                    radius="0.008"
+                    color="#FF00FF"
+                    opacity="0.8"
+                    material="shader: flat; transparent: true; alphaTest: 0.1;"
+                    class="checkpoint-marker"
+                ></a-sphere>
+
+                </a-entity>
+        </a-entity>
+
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    </a-scene>
+
     <div id="info-panel">
-        <h3 id="checkpoint-name"></h3>
-        <p id="animal-description"></p>
-        <p><a id="checkpoint-link" href="#" target="_blank">View Details</a></p>
+        <h2 id="info-panel-title"></h2>
+        <p id="info-panel-description"></p>
+        <div class="info-panel-buttons">
+            <button id="go-to-checkpoint">Enter Checkpoint Experience</button>
+            <button id="close-info-panel">Close</button>
+        </div>
     </div>
 
-    <script type="module">
-        import * as THREE from 'three';
-        import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    <script>
+        // Checkpoint data (same as before, ensure URLs match your checkpoint pages)
+        const CHECKPOINTS_DATA = [
+            { id: 1, name: 'Checkpoint 1: The Mystical Flower', description: 'A vibrant floral spot.', url: 'checkpoint_1.html?checkpointId=1' },
+            { id: 2, name: 'Checkpoint 2: Woodpecker\'s Perch', description: 'Home to the elusive woodpecker.', url: 'checkpoint_1.html?checkpointId=2' },
+            { id: 3, name: 'Checkpoint 3: Margarita Meadows', description: 'A beautiful expanse of Margarita Flower Bushes.', url: 'checkpoint_1.html?checkpointId=3' },
+            { id: 4, name: 'Checkpoint 4: Serpent\'s Slumber', description: 'Learn about the fascinating reptiles inhabiting this area.', url: 'checkpoint_1.html?checkpointId=4' },
+            { id: 5, name: 'Checkpoint 5: Crystal Tree Haven', description: 'Uncover the legends of the Japanese Tree Crystal.', url: 'checkpoint_1.html?checkpointId=5' },
+            // Add more checkpoints as needed
+        ];
 
-        // Set up the scene, camera, and renderer
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xbfd1e5); // Light blue background
-
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 1000);
-        camera.position.set(0, 50, 250); // Initial camera position (adjusted for further and higher view)
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
-
-        // Add OrbitControls for camera interaction
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true; // Smooth camera movement
-        controls.dampingFactor = 0.1;
-        controls.minDistance = 5;
-        controls.maxDistance = 1000; // Maximum zoom distance (increased significantly)
-        controls.enabled = false; // Initially disable controls
-
-        // Add ambient light to illuminate all objects equally
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-        scene.add(ambientLight);
-
-        // Add a directional light for shadows and more realistic lighting
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
-        dirLight.position.set(10, 20, 10); // Position of the light source
-        scene.add(dirLight);
-
-        // Initialize FBXLoader
-        const loader = new FBXLoader();
-        let loadedModel = null; // Store the loaded FBX model
-
-        // --- Checkpoint Data ---
-        const checkpointData = {
-            'CheckpointFlag1_Clickable': {
-                displayName: 'Checkpoint 1',
-                animals: 'Prepared for your ultimate discovery of our wildlife animal, **Hammerhead sharks** and the majestic **Great White Sharks**.',
-                url: 'checkpoint_1.html'
-            },
-            'CheckpointFlag2_Clickable': {
-                displayName: 'Checkpoint 2',
-                animals: 'Witness the playful antics of **Dolphins** and the graceful movements of **Sea Turtles**.',
-                url: 'checkpoint_2.html'
-            },
-            'CheckpointFlag3_Clickable': {
-                displayName: 'Checkpoint 3',
-                animals: 'Explore the vibrant coral reefs and encounter the colorful **Clownfish** and elegant **Manta Rays**.',
-                url: 'checkpoint_3.html'
-            },
-            'CheckpointFlag4_Clickable': {
-                displayName: 'Checkpoint 4',
-                animals: 'Discover the resilience of **Coral Polyps** and the darting **Reef Sharks**.',
-                url: 'checkpoint_4.html'
-            },
-            'CheckpointFlag5_Clickable': {
-                displayName: 'Checkpoint 5',
-                animals: 'Encounter the fascinating **Jellyfish** and various **Anemonefish** species.',
-                url: 'checkpoint_5.html'
-            },
-            'CheckpointFlag6_Clickable': {
-                displayName: 'Checkpoint 6',
-                animals: 'Observe the majestic **Whales** on their migration path and graceful **Squid**.',
-                url: 'checkpoint_6.html'
-            },
-            'CheckpointFlag7_Clickable': {
-                displayName: 'Checkpoint 7',
-                animals: 'Learn about the unique **Seahorses** and the camouflaged **Octopus**.',
-                url: 'checkpoint_7.html'
-            },
-            'CheckpointFlag8_Clickable': {
-                displayName: 'Checkpoint 8',
-                animals: 'Explore the deep sea trenches, home to **Anglerfish** and giant **Tube Worms**.',
-                url: 'checkpoint_8.html'
-            },
-            'CheckpointFlag9_Clickable': {
-                displayName: 'Checkpoint 9',
-                animals: 'Witness the beauty of **Starfish** and the intriguing **Moray Eels**.',
-                url: 'checkpoint_9.html'
-            }
-        };
-
-        // Load the FBX model
-        loader.load('BukitKiaraMap.fbx', fbx => {
-            loadedModel = fbx; // Assign the loaded model
-            fbx.scale.set(0.01, 0.01, 0.01); // Scale the model down
-
-            // IMPORTANT: This rotation line has been removed/commented out
-            // because you confirmed your FBX model is already Y-up from your 3D software.
-            // fbx.rotation.x = -Math.PI / 2; // (Previously here, now removed)
-
-            // Center the model in the scene
-            const box = new THREE.Box3().setFromObject(fbx);
-            const center = box.getCenter(new THREE.Vector3());
-            fbx.position.sub(center);
-
-            scene.add(fbx); // Add the model to the scene
-        }, xhr => {
-            // Progress callback
-            console.log(`Loading: ${Math.round((xhr.loaded / xhr.total) * 100)}%`);
-        }, err => {
-            console.error('Error loading FBX:', err);
-        });
-
-        // Raycaster for detecting interactions with 3D objects
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        let currentIntersected = null; // To keep track of the currently hovered object
-
-        // Get references to the info panel elements
+        // Get DOM elements
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const welcomeButton = document.getElementById('welcome-button');
+        const mainArScene = document.getElementById('main-ar-scene');
+        const map3DModelContainer = document.getElementById('map-3d-model-container');
         const infoPanel = document.getElementById('info-panel');
-        const checkpointName = document.getElementById('checkpoint-name');
-        const animalDescription = document.getElementById('animal-description');
-        const checkpointLink = document.getElementById('checkpoint-link');
+        const infoPanelTitle = document.getElementById('info-panel-title');
+        const infoPanelDescription = document.getElementById('info-panel-description');
+        const closeInfoPanelButton = document.getElementById('close-info-panel');
+        const goToCheckpointButton = document.getElementById('go-to-checkpoint');
+        let currentCheckpointId = null;
 
-        // Function to update and show the info panel
-        function showInfoPanel(name, description, linkUrl, clientX, clientY) {
-            checkpointName.textContent = name;
-            animalDescription.innerHTML = description;
-            checkpointLink.href = linkUrl;
-            checkpointLink.textContent = `View Details for ${name}`;
-
-            infoPanel.style.left = `${clientX}px`;
-            infoPanel.style.top = `${clientY}px`;
-            infoPanel.classList.add('visible');
+        // Function to display the info panel for a checkpoint
+        function displayInfoPanel(checkpoint) {
+            infoPanelTitle.textContent = checkpoint.name;
+            infoPanelDescription.textContent = checkpoint.description;
+            currentCheckpointId = checkpoint.id;
+            infoPanel.style.display = 'flex'; // Show the info panel
         }
 
         // Function to hide the info panel
         function hideInfoPanel() {
-            infoPanel.classList.remove('visible');
+            infoPanel.style.display = 'none'; // Hide the info panel
+            currentCheckpointId = null;
         }
 
-        // Event listener for mouse movement (HOVER)
-        window.addEventListener('mousemove', event => {
-            if (!controls.enabled) return; // Only process hover if controls are enabled
-
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-            raycaster.setFromCamera(mouse, camera);
-
-            const clickable = [];
-            if (loadedModel) {
-                loadedModel.traverse(obj => {
-                    if (obj.isMesh && checkpointData[obj.name]) {
-                        clickable.push(obj);
-                    }
-                });
-            }
-
-            const intersects = raycaster.intersectObjects(clickable, true);
-
-            if (intersects.length > 0) {
-                const mesh = intersects[0].object;
-                if (currentIntersected !== mesh) {
-                    currentIntersected = mesh;
-                    const data = checkpointData[mesh.name];
-                    if (data) {
-                        showInfoPanel(data.displayName, data.animals, data.url, event.clientX, event.clientY);
-                    }
-                }
-            } else {
-                if (currentIntersected) {
-                    hideInfoPanel();
-                    currentIntersected = null;
-                }
-            }
-        });
-
-        // Event listener for mouse click (to allow navigating to the URL)
-        window.addEventListener('click', event => {
-            if (!controls.enabled) return; // Only process click if controls are enabled
-
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(mouse, camera);
-
-            const clickable = [];
-            if (loadedModel) {
-                loadedModel.traverse(obj => {
-                    if (obj.isMesh && checkpointData[obj.name]) {
-                        clickable.push(obj);
-                    }
-                });
-            }
-
-            const intersects = raycaster.intersectObjects(clickable, true);
-            if (intersects.length > 0) {
-                const mesh = intersects[0].object;
-                const data = checkpointData[mesh.name];
-                if (data && data.url) {
-                    window.open(data.url, '_blank'); // Open the URL in a new tab
-                }
-            }
-        });
-
-        // Animation loop - now called only after welcome screen disappears
-        function animate() {
-            requestAnimationFrame(animate);
-            controls.update(); // Update OrbitControls
-            renderer.render(scene, camera);
-        }
-
-        // Welcome screen logic
-        const welcomeScreen = document.getElementById('welcome-screen');
-        const welcomeButton = document.getElementById('welcome-button');
-
+        // Event listener for the "Enter Experience" (Welcome) button
         welcomeButton.addEventListener('click', () => {
-            // Start the animation and enable controls when the button is clicked
-            animate();
-            controls.enabled = true;
             welcomeScreen.classList.add('hidden'); // Fade out the welcome screen
+            // After fade out, activate the AR scene
+            welcomeScreen.addEventListener('transitionend', () => {
+                mainArScene.setAttribute('visible', 'true'); // Activate the A-Frame scene (and camera)
+                mainArScene.classList.add('active'); // Apply active class for opacity transition
+                console.log("AR Scene Activated. Please scan the map target.");
+            }, { once: true }); // Ensure this runs only once
         });
 
-        // Initial setup on window load: Hide canvas until welcome button clicked
-        window.onload = function () {
-            // Renderer's canvas is already added to body.
-            // By default, controls are disabled, and animation loop not yet started.
-            // The welcome screen overlay covers everything initially.
-        }
+        document.addEventListener('DOMContentLoaded', () => {
+            // Event listeners for targetFound and targetLost
+            const mindarImageTargetEntity = document.querySelector('a-entity[mindar-image-target]');
+            if (mindarImageTargetEntity) {
+                mindarImageTargetEntity.addEventListener('targetFound', () => {
+                    console.log("Map Target Found! Displaying 3D map model.");
+                    map3DModelContainer.setAttribute('visible', 'true'); // Show the 3D map model
+                });
 
-        // Handle window resizing
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+                mindarImageTargetEntity.addEventListener('targetLost', () => {
+                    console.log("Map Target Lost! Hiding 3D map model.");
+                    map3DModelContainer.setAttribute('visible', 'false'); // Hide the 3D map model
+                    hideInfoPanel(); // Also hide info panel if target is lost
+                });
+            } else {
+                console.error("MindAR image target entity not found. Is your A-Frame scene correctly structured?");
+            }
+
+            // Event listener for checkpoint markers
+            mainArScene.addEventListener('click', (evt) => {
+                const clickedEntity = evt.detail.intersection && evt.detail.intersection.object.el;
+                if (clickedEntity && clickedEntity.classList.contains('checkpoint-marker')) {
+                    const checkpointId = clickedEntity.getAttribute('data-checkpoint-id');
+                    const checkpoint = CHECKPOINTS_DATA.find(cp => cp.id == checkpointId);
+                    if (checkpoint) {
+                        displayInfoPanel(checkpoint);
+                        console.log(`Checkpoint ${checkpoint.id} clicked!`);
+                    }
+                }
+            });
+
+            // Info Panel button listeners
+            closeInfoPanelButton.addEventListener('click', hideInfoPanel);
+            goToCheckpointButton.addEventListener('click', () => {
+                if (currentCheckpointId !== null) {
+                    const checkpoint = CHECKPOINTS_DATA.find(cp => cp.id === currentCheckpointId);
+                    if (checkpoint) {
+                        window.location.href = checkpoint.url; // Navigate to checkpoint page
+                    }
+                }
+            });
         });
     </script>
 </body>

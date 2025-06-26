@@ -6,6 +6,7 @@
     <title>Checkpoint [X] - Bukit Kiara AR World</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        /* General Body and Container Styles */
         body {
             font-family: 'Inter', sans-serif;
             margin: 0;
@@ -18,6 +19,7 @@
             min-height: 100vh;
             box-sizing: border-box;
             overflow-x: hidden;
+            overflow-y: auto; /* Allow body to scroll if content exceeds viewport */
         }
 
         #initial-content {
@@ -29,13 +31,15 @@
             width: 100%;
             margin-top: 50px;
             text-align: center;
-            transition: opacity 0.5s ease-out;
+            transition: opacity 0.5s ease-out; /* Keep transition for smoother hiding */
             opacity: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: calc(100vh - 100px);
             box-sizing: border-box;
+            margin-bottom: 20px;
+            position: relative; /* IMPORTANT: Establish stacking context for its children */
+            z-index: 1; /* Ensure it's above general background if any */
         }
 
         #initial-content.hidden {
@@ -66,17 +70,20 @@
             font-weight: 600;
             transition: background-color 0.3s ease, transform 0.2s ease;
             margin-top: 30px;
+            position: relative; /* IMPORTANT: Required for z-index to work */
+            z-index: 10; /* IMPORTANT: Ensure buttons are on top of other content */
+            pointer-events: all; /* IMPORTANT: Explicitly enable clicks */
         }
         .back-button:hover {
             background-color: #2980b9;
             transform: translateY(-2px);
         }
 
-        /* Adjusted image-placeholder for canvas */
+        /* Image Placeholder / Canvas Container */
         .image-placeholder {
             width: 100%;
             max-width: 600px;
-            height: 300px; /* Default height for image placeholders, also works for canvas */
+            height: 300px;
             background-color: #e0e0e0;
             border-radius: 8px;
             display: flex;
@@ -85,15 +92,19 @@
             color: #777;
             font-style: italic;
             margin: 25px auto;
-            overflow: hidden; /* Important to clip content within bounds */
+            overflow: hidden;
+            pointer-events: auto; /* Default, but explicit to ensure interaction */
+            position: relative; /* Added to establish stacking context for its children */
+            z-index: 1; /* Ensure canvas doesn't fall below other elements */
         }
         .image-placeholder img,
-        .image-placeholder canvas { /* Apply styles to canvas too */
+        .image-placeholder canvas {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* This mostly applies to img, but good to have */
+            object-fit: contain;
             border-radius: 8px;
-            display: block; /* Ensure canvas behaves like a block element */
+            display: block;
+            pointer-events: auto; /* Allow interaction with the 3D model */
         }
 
         /* AR Experience Styles - NOW FOR WEBXR */
@@ -103,29 +114,22 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            display: flex; /* Flexbox for centering */
-            justify-content: center;
-            align-items: center;
-            background-color: #222; /* Fallback background, WebXR will render over camera */
-            transition: opacity 0.5s ease-out;
-            opacity: 0;
-            pointer-events: none;
-            z-index: 10; /* Ensure it's on top */
-            flex-direction: column; /* Stack UI vertically if needed */
+            background-color: #222;
+            z-index: 10;
+            flex-direction: column;
+            /* Changes for display property */
+            display: none; /* Initially hidden */
         }
 
-        #ar-experience.visible {
-            opacity: 1;
-            pointer-events: all;
-        }
+        /* Removed .visible class for AR experience visibility */
+        /* Instead, JS will toggle display: flex/none */
 
         /* The WebXR canvas will take full screen */
         #ar-canvas {
             display: block;
             width: 100% !important;
             height: 100% !important;
-            /* WebXR will use its own background (camera feed) */
-            background-color: transparent; 
+            background-color: transparent;
         }
 
         /* Model Info Panel will now be an overlay in WebXR */
@@ -133,8 +137,8 @@
             position: absolute;
             top: 0;
             right: 0;
-            width: 300px; /* Fixed width for panel */
-            height: auto; /* Content-driven height */
+            width: 300px;
+            height: auto;
             max-height: 100vh;
             background-color: rgba(30, 30, 30, 0.85);
             color: white;
@@ -144,8 +148,8 @@
             flex-direction: column;
             justify-content: flex-start;
             overflow-y: auto;
-            z-index: 11; /* Above AR canvas */
-            pointer-events: all; /* Allow interaction */
+            z-index: 11;
+            pointer-events: all;
         }
         #model-info-panel h2 {
             margin-top: 0;
@@ -171,30 +175,14 @@
             text-decoration: none;
             font-weight: 600;
             transition: background-color 0.3s ease, transform 0.2s ease;
-            margin-top: auto; /* Pushes button to bottom of flex container */
-            align-self: center; /* Centers the button horizontally */
+            margin-top: auto;
+            align-self: center;
+            position: relative; /* IMPORTANT: Required for z-index to work */
+            z-index: 10; /* IMPORTANT: Ensure this button is on top within its panel */
+            pointer-events: all; /* IMPORTANT: Explicitly enable clicks */
         }
         #ar-back-button:hover {
             background-color: #c0392b;
-            transform: translateY(-2px);
-        }
-
-        /* Experience AR Button */
-        #experience-ar-button {
-            background-color: #2ecc71;
-            color: white;
-            padding: 15px 30px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.4em;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            margin-top: 25px;
-        }
-        #experience-ar-button:hover {
-            background-color: #27ae60;
             transform: translateY(-2px);
         }
 
@@ -215,6 +203,7 @@
             cursor: pointer;
             font-size: 0.9em;
             transition: background-color 0.3s ease;
+            pointer-events: all; /* Ensure language buttons are clickable */
         }
         #ar-language-toggle button.active {
             background-color: #007bff;
@@ -230,7 +219,9 @@
             border-top: 1px solid #eee;
             padding-top: 30px;
             width: 100%;
-            display: block; /* Default to block, let JS manage hide/show if no data */
+            display: block;
+            position: relative; /* IMPORTANT: Establish stacking context for AR button */
+            z-index: 5; /* IMPORTANT: Ensure this section is above the canvas if overlapping */
         }
 
         /* For WebXR UI elements */
@@ -240,12 +231,12 @@
             width: 100%;
             display: flex;
             justify-content: center;
-            z-index: 12; /* Above everything else */
-            pointer-events: none; /* Allow clicks to pass through by default */
+            z-index: 12;
+            pointer-events: none;
         }
 
         #ar-overlay-ui button {
-            pointer-events: all; /* Make button clickable */
+            pointer-events: all;
             background-color: rgba(0, 0, 0, 0.6);
             color: white;
             padding: 15px 25px;
@@ -260,26 +251,23 @@
             border-color: #2ecc71;
         }
 
-
         /* Responsive adjustments */
         @media (max-width: 768px) {
             #initial-content {
                 padding: 15px;
                 margin-top: 20px;
+                width: 95%;
+                min-height: auto; /* Allow height to be determined by content */
             }
             h1 {
-                font-size: 2em;
+                font-size: 1.8em;
             }
             p {
-                font-size: 1em;
-            }
-            #experience-ar-button {
-                font-size: 1.2em;
-                padding: 12px 25px;
+                font-size: 0.95em;
             }
 
             #ar-experience {
-                flex-direction: column; /* Stack elements vertically on small screens */
+                flex-direction: column;
             }
             #ar-canvas {
                 width: 100vw;
@@ -287,14 +275,41 @@
             }
             #model-info-panel {
                 width: 100%;
-                height: 30%; /* Take up bottom 30% of screen */
+                height: 35%;
                 top: auto;
                 bottom: 0;
                 left: 0;
+                padding: 15px;
+                font-size: 0.9em;
+            }
+            #model-info-panel h2 {
+                font-size: 1.5em;
             }
             #ar-language-toggle {
                 margin-top: 15px;
                 margin-bottom: 15px;
+            }
+            #ar-back-button {
+                padding: 8px 15px;
+                font-size: 0.9em;
+            }
+        }
+
+        /* Even smaller screens (e.g., old iPhones, small Androids) */
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5em;
+            }
+            p {
+                font-size: 0.9em;
+            }
+            #model-info-panel {
+                height: 40%;
+                padding: 10px;
+                font-size: 0.85em;
+            }
+            #model-info-panel h2 {
+                font-size: 1.3em;
             }
         }
     </style>
@@ -321,20 +336,15 @@
             Their unique behaviors and habitats are truly a sight to behold.
             Prepare for your ultimate discovery!
         </p>
-        <p>
-            Add more detailed information about the animals, their conservation status,
-            interesting facts, or even a short video embed here. Make it engaging!
-        </p>
 
         <div id="ar-vision-section"> <h2>Experience with AR Vision</h2>
             <p>Step into an immersive world and interact with a 3D model of our featured animal!</p>
-            <div class="image-placeholder" style="height: 200px;">
+            <div class="image-placeholder" style="height: 200px; cursor: pointer;">
                 <img id="ar-model-preview" src="assets/colored_flower.jpg" alt="AR Model Preview">
             </div>
-            <button id="experience-ar-button">Experience with AR</button>
-        </div>
+            </div>
 
-        <a href="index.html" class="back-button">Back to Map</a>
+            <a href="index.html" class="back-button">Back to Map</a>
     </div>
 
     <div id="ar-experience">
@@ -353,29 +363,33 @@
         <div id="ar-overlay-ui">
             <button id="place-model-button" style="display:none;">Place Model</button>
         </div>
+        <div id="camera-permission-message" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(0,0,0,0.7); color: white; padding: 20px; border-radius: 10px; text-align: center; display: none; z-index: 15;">
+            <p>Please grant camera access to experience AR.</p>
+            <button id="grant-camera-button" style="background-color: #2ecc71; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-top: 10px;">Grant Access</button>
+        </div>
     </div>
 
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-        import * as Tone from 'tone'; // Correct import for Tone.js as you found!
+        import * as Tone from 'tone';
 
         // --- Checkpoint specific data (YOU WILL CUSTOMIZE THESE PER PAGE) ---
-        const CHECKPOINT_NUMBER = 1; // IMPORTANT: Change this for each checkpoint page (e.g., 1, 2, 3...)
+        const CHECKPOINT_NUMBER = 1;
         const CHECKPOINT_TITLE = `Checkpoint ${CHECKPOINT_NUMBER}`;
 
         // --- AR Content Data for the 5 models ---
         const arContentData = {
             1: { // Checkpoint 1: Colored Flower
-                arModelPath: 'models/colored_flower.glb', // GLB path for both main view and AR
+                arModelPath: 'models/colored_flower.glb',
                 audio: {
                     en: 'audio/English (Colored Flower).mp3',
                     ja: 'audio/Japanese (Colored Flower).mp3'
                 },
                 arModelTitle: "Colored Flower",
                 arModelDescription: `Explore the vibrant colors and unique structure of the Colored Flower. This fascinating plant plays a crucial role in its ecosystem, attracting various pollinators.`,
-                arPreviewImage: 'assets/colored_flower.jpg', // Specific preview image for this model (for the AR section)
+                arPreviewImage: 'assets/colored_flower.jpg',
             },
             2: { // Checkpoint 2: Hairy Woodpecker
                 arModelPath: 'models/hairy_woodpecker.glb',
@@ -432,20 +446,18 @@
 
             if (thisCheckpointARData && thisCheckpointARData.audio[language]) {
                 const audioFilePath = thisCheckpointARData.audio[language];
-                // Check if audio context is suspended (common on mobile browsers) and resume
                 if (Tone.context.state !== 'running') {
                     try {
                         await Tone.start();
                         console.log("Tone.js audio context resumed.");
                     } catch (e) {
                         console.error("Failed to resume Tone.js audio context:", e);
-                        // Fallback or user instruction needed here
                         return;
                     }
                 }
 
                 audioPlayer = new Tone.Player(audioFilePath).toDestination();
-                audioPlayer.volume.value = -10; // Adjust volume if needed
+                audioPlayer.volume.value = -10;
                 audioPlayer.autostart = true;
                 audioPlayer.loop = false;
                 console.log(`Playing audio: ${audioFilePath}`);
@@ -478,11 +490,10 @@
         let arModelPlaced = false;
         let arOverlayUi = document.getElementById('ar-overlay-ui');
         let placeModelButton = document.getElementById('place-model-button');
-        let reticle = null; // Visual cue for hit testing
+        let reticle = null;
 
         // Get references to DOM elements globally
         const initialContentDiv = document.getElementById('initial-content');
-        const experienceArButton = document.getElementById('experience-ar-button');
         const arVisionSection = document.getElementById('ar-vision-section');
         const arModelPreviewImage = document.getElementById('ar-model-preview');
         const mainModelCanvas = document.getElementById('main-model-canvas');
@@ -494,6 +505,9 @@
         const arBackButton = document.getElementById('ar-back-button');
         const arLangEnButton = document.getElementById('ar-lang-en');
         const arLangJaButton = document.getElementById('ar-lang-ja');
+        const cameraPermissionMessage = document.getElementById('camera-permission-message');
+        const grantCameraButton = document.getElementById('grant-camera-button');
+
 
         function initMainModelViewer() {
             if (!mainModelCanvas) {
@@ -544,11 +558,12 @@
                 const size = box.getSize(new THREE.Vector3());
                 const center = box.getCenter(new THREE.Vector3());
 
+                // Scale the model to fit within a consistent view
                 const maxDim = Math.max(size.x, size.y, size.z);
-                const scaleFactor = 2 / maxDim;
+                const scaleFactor = 1.5 / maxDim; // Adjusted scale for better initial view
                 mainLoadedModel.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
-                box.setFromObject(mainLoadedModel);
+                box.setFromObject(mainLoadedModel); // Recalculate box after scaling
                 box.getCenter(center);
                 mainLoadedModel.position.sub(center);
 
@@ -618,13 +633,13 @@
             window.removeEventListener('resize', onMainModelWindowResize);
         }
 
-        // --- WebXR AR Functions (replacing previous initARExperience and animateAR) ---
+        // --- WebXR AR Functions ---
         async function initWebXR(session) {
             arSession = session;
             arSession.addEventListener('end', onXRSessionEnded);
 
             arRenderer = new THREE.WebGLRenderer({
-                alpha: true, // required for AR
+                alpha: true,
                 preserveDrawingBuffer: true,
                 canvas: arCanvas,
                 context: arCanvas.getContext('webgl', { xrCompatible: true })
@@ -635,20 +650,17 @@
             arRenderer.outputEncoding = THREE.sRGBEncoding;
 
             arRenderer.xr.enabled = true;
-            arRenderer.xr.setReferenceSpaceType('local'); // or 'local-floor' for floor detection
+            arRenderer.xr.setReferenceSpaceType('viewer'); // 'local-floor' is better for more stable placement
             arRenderer.xr.setSession(arSession);
 
             arScene = new THREE.Scene();
 
-            // Add lights for AR scene
-            const ambientLight = new THREE.AmbientLight(0xffffff, 1.0); // Full intensity ambient light
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
             arScene.add(ambientLight);
             const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            directionalLight.position.set(0, 5, 0); // Light from above
+            directionalLight.position.set(0, 5, 0);
             arScene.add(directionalLight);
 
-
-            // Reticle to show where model can be placed
             const geometry = new THREE.RingGeometry(0.1, 0.12, 32).rotateX(- Math.PI / 2);
             const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
             reticle = new THREE.Mesh(geometry, material);
@@ -656,18 +668,16 @@
             reticle.visible = false;
             arScene.add(reticle);
 
-            // Load the 3D model for AR
             if (thisCheckpointARData && thisCheckpointARData.arModelPath) {
                 const gltfLoader = new GLTFLoader();
                 gltfLoader.load(thisCheckpointARData.arModelPath, (gltf) => {
                     arLoadedModel = gltf.scene;
-                    // Scale the model to a reasonable size for AR (e.g., 0.5 units height)
                     const box = new THREE.Box3().setFromObject(arLoadedModel);
                     const size = box.getSize(new THREE.Vector3());
                     const maxDim = Math.max(size.x, size.y, size.z);
-                    const scaleFactor = 0.5 / maxDim; // Adjust based on desired real-world size
+                    const scaleFactor = 0.5 / maxDim;
                     arLoadedModel.scale.set(scaleFactor, scaleFactor, scaleFactor);
-                    arLoadedModel.visible = false; // Hide until placed
+                    arLoadedModel.visible = false;
                     arScene.add(arLoadedModel);
                     console.log("AR Model loaded.");
                 }, undefined, (error) => {
@@ -679,33 +689,29 @@
                 console.warn("No AR model path defined for this checkpoint.");
             }
 
-            // Set up hit testing
             arReferenceSpace = await arSession.requestReferenceSpace('viewer');
             arHitTestSource = await arSession.requestHitTestSource({ space: arReferenceSpace });
 
-            // Event listener for placing the model
             arCanvas.addEventListener('click', onARCanvasClick);
             placeModelButton.addEventListener('click', onPlaceModelButtonClick);
 
-            // Populate model info panel
             arModelTitle.textContent = thisCheckpointARData ? thisCheckpointARData.arModelTitle : "Model Information";
             arModelDescription.innerHTML = thisCheckpointARData ? thisCheckpointARData.arModelDescription : "No specific information available for this AR experience.";
 
-            // Start the AR animation loop
             arRenderer.setAnimationLoop(animateWebXR);
 
-            // Show place model button initially
             placeModelButton.style.display = 'block';
-            arModelPlaced = false; // Reset placement state
+            arModelPlaced = false;
         }
 
         function onXRSessionEnded() {
             console.log("XR Session Ended.");
-            disposeARExperience(); // This will clean up the WebXR specific resources
-            arExperienceDiv.classList.remove('visible');
+            disposeARExperience();
+            arExperienceDiv.style.display = 'none'; // Changed from classList.remove('visible')
             initialContentDiv.classList.remove('hidden');
             stopBackgroundAudio();
             initMainModelViewer();
+            cameraPermissionMessage.style.display = 'none'; // Hide permission message
         }
 
 
@@ -713,7 +719,8 @@
             if (!frame) return;
 
             const referenceSpace = arRenderer.xr.getReferenceSpace();
-            const session = arRenderer.xr.getSession();
+            // arCamera is implicitly handled by arRenderer.xr.getCamera(arCamera)
+            // No need to manually create/update arCamera for WebXR loop
 
             if (arLoadedModel && arLoadedModel.visible === false && arHitTestSource && !arModelPlaced) {
                 const hitTestResults = frame.getHitTestResults(arHitTestSource);
@@ -727,26 +734,26 @@
                 }
             }
 
-            arRenderer.render(arScene, arRenderer.xr.getCamera(arCamera)); // Use XR camera
+            // The arRenderer.xr.getCamera(arCamera) is crucial here; it gets the camera from the XR session.
+            arRenderer.render(arScene, arRenderer.xr.getCamera(new THREE.PerspectiveCamera())); // Pass a dummy camera if arCamera isn't used globally for non-XR rendering.
         }
 
-        // --- Model Placement Logic for AR ---
         function onARCanvasClick(event) {
             if (arSession && arLoadedModel && !arModelPlaced && reticle.visible) {
-                 // Place the model at the reticle's position
                 arLoadedModel.position.setFromMatrixPosition(reticle.matrix);
-                arLoadedModel.quaternion.setFromRotationMatrix(reticle.matrix); // Optional: align model rotation
-                arLoadedModel.visible = true; // Show the model
+                arLoadedModel.quaternion.setFromRotationMatrix(reticle.matrix);
+                arLoadedModel.visible = true;
                 arModelPlaced = true;
-                reticle.visible = false; // Hide reticle
-                placeModelButton.style.display = 'none'; // Hide "Place Model" button
+                reticle.visible = false;
+                placeModelButton.style.display = 'none';
                 console.log("AR Model placed at:", arLoadedModel.position);
+                // Optionally: Start audio after model is placed if preferred
+                // playAudioForLanguage(currentLanguage);
             }
         }
 
         function onPlaceModelButtonClick() {
             if (arSession && arLoadedModel && !arModelPlaced && reticle.visible) {
-                // Same logic as onARCanvasClick
                 arLoadedModel.position.setFromMatrixPosition(reticle.matrix);
                 arLoadedModel.quaternion.setFromRotationMatrix(reticle.matrix);
                 arLoadedModel.visible = true;
@@ -754,13 +761,15 @@
                 reticle.visible = false;
                 placeModelButton.style.display = 'none';
                 console.log("AR Model placed via button at:", arLoadedModel.position);
+                // Optionally: Start audio after model is placed if preferred
+                // playAudioForLanguage(currentLanguage);
             }
         }
 
 
         function disposeARExperience() {
             if (arSession) {
-                arSession.end(); // End the XR session
+                arSession.end();
                 arSession = null;
             }
             if (arHitTestSource) {
@@ -791,85 +800,107 @@
                 arLoadedModel = null;
             }
             if (reticle) {
-                arScene.remove(reticle);
-                reticle.geometry.dispose();
-                reticle.material.dispose();
+                if (arScene) arScene.remove(reticle); // Ensure reticle is removed if scene exists
+                if (reticle.geometry) reticle.geometry.dispose();
+                if (reticle.material) reticle.material.dispose();
                 reticle = null;
             }
             arCanvas.removeEventListener('click', onARCanvasClick);
             placeModelButton.removeEventListener('click', onPlaceModelButtonClick);
-            placeModelButton.style.display = 'none'; // Ensure button is hidden
-            arModelPlaced = false; // Reset state
+            placeModelButton.style.display = 'none';
+            arModelPlaced = false;
         }
 
 
-        // --- UI Transition Function (shared by button and image click) ---
+        // --- UI Transition Function ---
         async function enterARExperience() {
-            disposeMainModelViewer(); // Dispose the main 3D viewer first
+            disposeMainModelViewer();
 
             initialContentDiv.classList.add('hidden');
-            arExperienceDiv.classList.add('visible');
+            arExperienceDiv.style.display = 'flex'; // Changed from classList.add('visible')
+            cameraPermissionMessage.style.display = 'none'; // Hide if already visible
 
-            // Set up model info panel initially
             arModelTitle.textContent = thisCheckpointARData ? thisCheckpointARData.arModelTitle : "Model Information";
             arModelDescription.innerHTML = thisCheckpointARData ? thisCheckpointARData.arModelDescription : "No specific information available for this AR experience.";
 
             if (navigator.xr) {
                 try {
-                    // Request 'immersive-ar' session with required and optional features
-                    const session = await navigator.xr.requestSession('immersive-ar', {
-                        requiredFeatures: ['local-floor', 'hit-test'], // Essential for placing models
-                        optionalFeatures: ['dom-overlay'], // For overlaying standard HTML UI
-                        domOverlay: { root: arExperienceDiv } // Use the ar-experience div as the root for DOM overlay
-                    });
-                    console.log("WebXR immersive-ar session requested.");
-                    await initWebXR(session);
-                    // Play audio once the AR session starts
-                    if (thisCheckpointARData && thisCheckpointARData.audio[currentLanguage]) {
-                        playAudioForLanguage(currentLanguage);
+                    // Check for 'immersive-ar' support
+                    const isArSupported = await navigator.xr.isSessionSupported('immersive-ar');
+                    if (isArSupported) {
+                        // Request 'immersive-ar' session
+                        const session = await navigator.xr.requestSession('immersive-ar', {
+                            requiredFeatures: ['hit-test'],
+                            // optionalFeatures: ['dom-overlay'],
+                            // domOverlay: { root: arExperienceDiv }
+                        });
+                        console.log("WebXR immersive-ar session requested.");
+                        await initWebXR(session);
+                        // Play audio only after the AR session successfully starts
+                        if (thisCheckpointARData && thisCheckpointARData.audio[currentLanguage]) {
+                            playAudioForLanguage(currentLanguage);
+                        }
+                    } else {
+                        throw new Error("Immersive AR not supported on this device.");
                     }
                 } catch (e) {
                     console.error("Error starting WebXR AR session:", e);
-                    alert("AR experience could not be started. Make sure your device supports WebXR AR and you are using HTTPS. Error: " + e.message);
-                    // Fallback to the "Magic Window" 3D viewer if WebXR fails
-                    console.warn("Falling back to 3D model viewer due to WebXR error.");
-                    arExperienceDiv.classList.remove('visible'); // Hide AR container
-                    initialContentDiv.classList.remove('hidden'); // Show initial content
-                    initMainModelViewer(); // Re-init main model
+                    // Show a more user-friendly message for camera permission issues or lack of AR support
+                    if (e.name === 'NotAllowedError' || e.name === 'SecurityError') {
+                        // This usually means camera access was denied or not over HTTPS
+                        cameraPermissionMessage.style.display = 'block'; // Show the custom message
+                        alert("AR experience requires camera access. Please grant camera permission and ensure the site is served over HTTPS.");
+                    } else if (e.name === 'InvalidStateError' && e.message.includes('XR system is not ready')) {
+                         alert("Your device or browser might not be ready for WebXR AR. Please ensure your browser is up-to-date and supports WebXR.");
+                    } else {
+                        alert("AR experience could not be started. Error: " + e.message + "\nFalling back to 3D model viewer.");
+                    }
+                    // Fallback to the main 3D model viewer
+                    arExperienceDiv.style.display = 'none'; // Changed from classList.remove('visible')
+                    initialContentDiv.classList.remove('hidden');
+                    initMainModelViewer();
                     stopBackgroundAudio();
                 }
             } else {
-                console.warn("WebXR is not supported by this browser. This device may not have AR capabilities. No true AR experience will be shown.");
+                console.warn("WebXR is not supported by this browser. This device may not have AR capabilities.");
                 alert("Your browser or device does not support WebXR AR. Showing a 3D model viewer instead.");
-                // Fallback to the "Magic Window" 3D viewer if WebXR is not supported at all
-                // This will re-use initARExperience, which we removed. Let's make it more explicit.
-                // For now, we'll just show the main content again as we don't have a specific AR-like fallback without camera.
-                arExperienceDiv.classList.remove('visible'); // Hide AR container
-                initialContentDiv.classList.remove('hidden'); // Show initial content
-                initMainModelViewer(); // Re-init main model
+                arExperienceDiv.style.display = 'none'; // Changed from classList.remove('visible')
+                initialContentDiv.classList.remove('hidden');
+                initMainModelViewer();
                 stopBackgroundAudio();
             }
         }
 
 
         // --- Event Listeners ---
-        // Click listener for the "Experience with AR" button
-        experienceArButton.addEventListener('click', enterARExperience);
-
         arBackButton.addEventListener('click', () => {
             if (arSession) {
-                arSession.end(); // End the WebXR session
+                arSession.end();
             } else {
-                // If somehow not in an XR session, go back normally
-                disposeARExperience(); // Clean up current resources
+                disposeARExperience();
                 stopBackgroundAudio();
-                arExperienceDiv.classList.remove('visible');
+                arExperienceDiv.style.display = 'none'; // Changed from classList.remove('visible')
                 initialContentDiv.classList.remove('hidden');
                 initMainModelViewer();
             }
         });
 
-        // Language Toggle Logic (Now within AR experience)
+        grantCameraButton.addEventListener('click', async () => {
+            cameraPermissionMessage.style.display = 'none'; // Hide message temporarily
+            // Attempt to access camera to trigger permission prompt
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                stream.getTracks().forEach(track => track.stop()); // Stop stream immediately
+                console.log("Camera access granted. Retrying AR experience.");
+                enterARExperience(); // Retry entering AR
+            } catch (err) {
+                console.error("Failed to grant camera access:", err);
+                alert("Camera access denied. AR experience cannot proceed without camera permission.");
+                cameraPermissionMessage.style.display = 'block'; // Re-show message if still denied
+            }
+        });
+
+
         function setLanguageAndPlayAudio(lang) {
             currentLanguage = lang;
             arLangEnButton.classList.remove('active');
@@ -882,7 +913,12 @@
             console.log(`Language set to: ${currentLanguage}`);
 
             if (thisCheckpointARData && thisCheckpointARData.audio[currentLanguage]) {
-                playAudioForLanguage(currentLanguage);
+                // Only play audio if an AR session is active
+                if (arSession) {
+                    playAudioForLanguage(currentLanguage);
+                } else {
+                    console.warn("AR session not active, not playing audio on language change.");
+                }
             } else {
                 console.warn(`No audio file path defined for Checkpoint ${CHECKPOINT_NUMBER} in ${currentLanguage}.`);
                 stopBackgroundAudio();
@@ -893,25 +929,23 @@
         arLangJaButton.addEventListener('click', () => setLanguageAndPlayAudio('ja'));
 
 
-        // Populate initial content dynamically and manage AR section visibility
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelector('h1').textContent = CHECKPOINT_TITLE;
             document.title = CHECKPOINT_TITLE + " - Bukit Kiara AR World";
 
-            // Initialize the main interactive 3D model viewer
             initMainModelViewer();
 
-            // Show AR section only if there is data for this checkpoint
             if (thisCheckpointARData) {
-                arVisionSection.style.display = 'block'; // Ensure section is visible
-                // Dynamically set AR Preview Image source using data from arContentData
+                arVisionSection.style.display = 'block';
                 arModelPreviewImage.src = thisCheckpointARData.arPreviewImage;
+                arModelPreviewImage.addEventListener('click', enterARExperience); // Ensure image is clickable
             } else {
-                arVisionSection.style.display = 'none'; // Hide if no AR content
+                arVisionSection.style.display = 'none';
             }
 
-            // Set initial active language button for AR mode
-            // This assumes AR experience is entered in English by default unless a language preference is saved
+            // Ensure AR experience div is hidden initially with display: none
+            arExperienceDiv.style.display = 'none';
+
             if (currentLanguage === 'en') {
                 arLangEnButton.classList.add('active');
             } else {
