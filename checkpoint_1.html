@@ -61,6 +61,17 @@
             margin-bottom: 20px;
             color: #555;
         }
+
+        /* NEW: Wrapper for the Back to Map button for alignment control */
+        .back-button-wrapper {
+            width: 100%; /* Take full available width of parent */
+            max-width: 600px; /* Align with other content blocks like image/description */
+            text-align: left; /* Aligns the button to the left within this wrapper */
+            box-sizing: border-box;
+            margin-top: 20px; /* Adjust vertical spacing as needed */
+            margin-bottom: 20px; /* Adjust vertical spacing as needed */
+        }
+
         .back-button {
             display: inline-block;
             background-color: #3498db;
@@ -70,9 +81,8 @@
             text-decoration: none;
             font-weight: 600;
             transition: background-color 0.3s ease, transform 0.2s ease;
-            /* UPDATED: Reduced vertical margins for tighter integration */
-            margin-top: 20px; 
-            margin-bottom: 20px; 
+            /* UPDATED: Removed individual margins as wrapper handles spacing */
+            margin: 0; 
             position: relative; /* IMPORTANT: Required for z-index to work */
             z-index: 10; /* IMPORTANT: Ensure buttons are on top of other content */
             pointer-events: all; /* IMPORTANT: Explicitly enable clicks */
@@ -253,6 +263,13 @@
                 font-size: 0.95em;
             }
 
+            /* Responsive adjustments for the new wrapper */
+            .back-button-wrapper {
+                margin-top: 15px; /* Slightly less vertical space on mobile */
+                margin-bottom: 15px;
+                text-align: center; /* Optionally center button on small screens */
+            }
+
             #model-info-panel {
                 width: 100%;
                 height: 35%;
@@ -317,14 +334,16 @@
             Prepare for your ultimate discovery!
         </p>
 
-        <a href="index.html" class="back-button">Back to Map</a>
+        <div class="back-button-wrapper">
+            <a href="index.html" class="back-button">Back to Map</a>
+        </div>
 
         <div id="ar-vision-section"> <h2>Experience with AR Vision</h2>
             <p>Step into an immersive world and interact with a 3D model of our featured animal!</p>
             <div class="image-placeholder" style="height: 200px; cursor: pointer;">
                 <img id="ar-model-preview" src="assets/colored_flower.jpg" alt="AR Model Preview">
             </div>
-            </div>
+        </div>
 
     </div>
 
