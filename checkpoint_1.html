@@ -62,7 +62,7 @@
             color: #555;
         }
 
-        /* NEW: Wrapper for the Back to Map button for alignment control */
+        /* Wrapper for the Back to Map button for alignment control */
         .back-button-wrapper {
             width: 100%; /* Take full available width of parent */
             max-width: 600px; /* Align with other content blocks like image/description */
@@ -81,8 +81,7 @@
             text-decoration: none;
             font-weight: 600;
             transition: background-color 0.3s ease, transform 0.2s ease;
-            /* UPDATED: Removed individual margins as wrapper handles spacing */
-            margin: 0; 
+            margin: 0; /* Removed individual margins as wrapper handles spacing */
             position: relative; /* IMPORTANT: Required for z-index to work */
             z-index: 10; /* IMPORTANT: Ensure buttons are on top of other content */
             pointer-events: all; /* IMPORTANT: Explicitly enable clicks */
@@ -180,30 +179,16 @@
             text-align: left;
             color: #e0e0e0;
         }
-        /* AR Back button specific styling */
-        #ar-back-button {
-            position: absolute;
-            bottom: 20px; /* Position at the bottom */
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #e74c3c; /* Reddish for exit */
-            color: white;
-            padding: 12px 25px;
-            font-size: 1.1em;
-            z-index: 100; /* Ensure it's on top of model-viewer and info panel */
-        }
-        #ar-back-button:hover {
-            background-color: #c0392b;
-        }
 
-        /* Language Toggle - NEW LOCATION inside AR experience */
+        /* Language Toggle - NOW INSIDE model-info-panel */
         #ar-language-toggle {
-            position: absolute;
-            top: 20px; /* Position at the top */
             display: flex;
             gap: 10px;
-            justify-content: center;
-            z-index: 100; /* Ensure it's on top of model-viewer and info panel */
+            justify-content: center; /* Keeps them centered within the info panel */
+            z-index: 100; /* Still relevant for stacking inside info panel if needed */
+            pointer-events: all;
+            margin-top: 25px; /* Space from the description text above */
+            width: 100%; /* Ensures it takes full width for justify-content: center to work */
         }
         #ar-language-toggle button {
             background-color: #6c757d;
@@ -222,6 +207,26 @@
         }
         #ar-language-toggle button:hover:not(.active) {
             background-color: #5a6268;
+        }
+
+        /* AR Back button specific styling - NOW INSIDE model-info-panel */
+        #ar-back-button {
+            background-color: #e74c3c; /* Reddish for exit */
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px; /* Added back general button styling */
+            text-decoration: none; /* Added back general button styling */
+            font-weight: 600; /* Added back general button styling */
+            transition: background-color 0.3s ease, transform 0.2s ease; /* Added back general button styling */
+            font-size: 1.1em;
+            z-index: 100;
+            display: block; /* Make it a block-level element to allow auto margins for centering */
+            margin: 20px auto 0 auto; /* 20px margin from language buttons, auto for horizontal centering, 0 bottom */
+            pointer-events: all; /* Ensure it's clickable */
+        }
+        #ar-back-button:hover {
+            background-color: #c0392b;
+            transform: translateY(-2px);
         }
 
         /* AR Vision Section - Default visibility handled by JS */
@@ -282,13 +287,16 @@
             #model-info-panel h2 {
                 font-size: 1.5em;
             }
+            /* Adjust language toggle for mobile within info panel */
             #ar-language-toggle {
                 margin-top: 15px;
-                margin-bottom: 15px;
+                margin-bottom: 0px; /* Adjust as needed, the exit button will have its own margin-top */
             }
+            /* Adjust exit button for mobile within info panel */
             #ar-back-button {
                 padding: 8px 15px;
                 font-size: 0.9em;
+                margin-top: 15px; /* Keep consistent spacing */
             }
         }
 
