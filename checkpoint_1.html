@@ -650,7 +650,7 @@
             arRenderer.outputEncoding = THREE.sRGBEncoding;
 
             arRenderer.xr.enabled = true;
-            arRenderer.xr.setReferenceSpaceType('local-floor'); // 'local-floor' is better for more stable placement
+            arRenderer.xr.setReferenceSpaceType('viewer'); // 'local-floor' is better for more stable placement
             arRenderer.xr.setSession(arSession);
 
             arScene = new THREE.Scene();
@@ -830,7 +830,7 @@
                     if (isArSupported) {
                         // Request 'immersive-ar' session
                         const session = await navigator.xr.requestSession('immersive-ar', {
-                            requiredFeatures: ['local-floor', 'hit-test'],
+                            requiredFeatures: ['hit-test'],
                             // optionalFeatures: ['dom-overlay'],
                             // domOverlay: { root: arExperienceDiv }
                         });
