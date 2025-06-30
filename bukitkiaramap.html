@@ -1,67 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bukit Kiara 3D Map</title>
-    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-    <script nomodule src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.js"></script>
-
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bukit Kiara 3D Map - Three.js</title>
     <style>
         body {
-            font-family: 'Inter', sans-serif;
             margin: 0;
-            padding: 0;
-            background-color: #f0f0f0; /* Still good to have a background in case model doesn't load */
-            color: #333;
-            /* Make body fill the viewport */
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+        #container {
             width: 100vw;
             height: 100vh;
-            overflow: hidden; /* Prevent scrolling */
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            display: block;
+            position: relative;
         }
-
-        model-viewer {
-            width: 100vw;   /* Take full viewport width */
-            height: 100vh;  /* Take full viewport height */
-            background-color: #e0e0e0; /* Fallback background for viewer */
-            border-radius: 0; /* Remove border-radius for full screen */
-            box-shadow: none; /* Remove box-shadow */
-            --poster-color: #cccccc;
-            --controls-color: #3498db;
-            --progress-bar-color: #2ecc71;
-            --progress-bar-height: 5px;
+        canvas {
+            display: block;
         }
-
-        /* All other info-section and info-panel styles are not needed if you only want the model */
-        /* If you keep any of the info panel logic for future use, ensure it doesn't interfere */
+        .hotspot-label {
+            position: absolute;
+            background-color: #3498db;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            pointer-events: auto;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+            transform: translate(-50%, -100%);
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+        .hotspot-label:hover {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
-    <model-viewer
-        src="./models/bukit_kiara_map.glb"
-        alt="Bukit Kiara 3D Map"
-        camera-controls
-        auto-rotate
-        ar
-        shadow-intensity="1"
-        shadow-softness="0.5"
-        exposure="1"
-        environment-image="neutral"
-        interaction-prompt="none"
-        /* Removed animation-name="main_animation" as it might not be needed for a static map and could cause issues if the animation doesn't exist. */
-    ></model-viewer>
+    <div id="container"></div>
 
-    <script>
-        const CHECKPOINTS_DATA = [
-            { id: 1, name: 'Checkpoint 1: The Mystical Flower', description: 'A vibrant floral spot.', url: 'checkpoint_1.html?checkpointId=1' },
-            { id: 2, name: 'Checkpoint 2: Woodpecker\'s Perch', description: 'Home to the elusive woodpecker.', url: 'checkpoint_1.html?checkpointId=2' },
-            { id: 3, name: 'Checkpoint 3: Margarita Meadows', description: 'A beautiful expanse of Margarita Flower Bushes.', url: 'checkpoint_1.html?checkpointId=3' },
-            { id: 4, name: 'Checkpoint 4: Serpent\'s Slumber', description: 'Learn about the fascinating reptiles inhabiting this area.', url: 'checkpoint_1.html?checkpointId=4' },
-            { id: 5, name: 'Checkpoint 5: Crystal Tree Haven', description: 'Uncover the legends of the Japanese Tree Crystal.', url: 'checkpoint_1.html?checkpointId=5' },
-        ];
+    <script type="module">
+        import * as THREE from 'https://unpkg.com/three@0.126.1/build/three.module.js';
+        import { GLTFLoader } from 'https://unpkg.com/three@0.126.1/examples/jsm/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'https://unpkg.com/three@0.126.1/examples/jsm/controls/OrbitControls.js';
+
+        const container = document.getElementById('container');
+
+        // Scene, Camera, Renderer
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xe0e0e0);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 5, 10);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+
+        // Controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.target.set(0, 1, 0);
+        controls.update();
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 10, 7.5);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+
+        // Raycaster for interaction
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        // Store hotspots and their DOM labels
+        const hotspots = [];
+
+        // Load GLB model
+        const loader = new GLTFLoader();
+        loader.load('./models/bukit_kiara_map.glb', function(gltf) {
+            const model = gltf.scene;
+            scene.add(model);
+
+            // Traverse model to find checkpoint nodes with targetUrl property
+            model.traverse(function(node) {
+                if (node.userData && node.userData.targetUrl) {
+                    createHotspot(node);
+                }
+            });
+        }, undefined, function(error) {
+            console.error('Error loading GLB model:', error);
+        });
+
+        // Create hotspot label and store reference
+        function createHotspot(node) {
+            const label = document.createElement('div');
+            label.className = 'hotspot-label';
+            label.textContent = node.name || 'Checkpoint';
+            label.title = node.userData.description || '';
+            label.style.position = 'absolute';
+            label.style.pointerEvents = 'auto';
+            label.style.cursor = 'pointer';
+
+            label.addEventListener('click', () => {
+                window.location.href = node.userData.targetUrl;
+            });
+
+            container.appendChild(label);
+
+            hotspots.push({ node, label });
+        }
+
+        // Update hotspot label positions on render
+        function updateHotspots() {
+            hotspots.forEach(({ node, label }) => {
+                const pos = new THREE.Vector3();
+                node.getWorldPosition(pos);
+                pos.project(camera);
+
+                const x = (pos.x * 0.5 + 0.5) * window.innerWidth;
+                const y = (-pos.y * 0.5 + 0.5) * window.innerHeight;
+
+                label.style.transform = `translate(-50%, -100%) translate(${x}px,${y}px)`;
+
+                // Hide label if behind camera
+                const isVisible = pos.z < 1;
+                label.style.display = isVisible ? 'block' : 'none';
+            });
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Animate loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            updateHotspots();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Optional: handle mouse clicks on 3D objects (if needed)
+        // Currently hotspots are DOM elements for easier interaction
     </script>
 </body>
 </html>
