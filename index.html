@@ -152,6 +152,47 @@
             background-color: #27ae60;
         }
 
+        /* Custom Message Box Styles */
+        #custom-message-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            z-index: 101; /* Above welcome screen and info panel */
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            align-items: center;
+            max-width: 80%;
+            width: 400px;
+            box-sizing: border-box;
+        }
+
+        #custom-message-box p {
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+
+        #custom-message-box button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+
+        #custom-message-box button:hover {
+            background-color: #2980b9;
+        }
+
         /* Responsive adjustments */
         @media (max-width: 768px) {
             #welcome-screen h1 {
@@ -181,6 +222,13 @@
                 padding: 8px 15px;
                 font-size: 0.9em;
                 margin: 0 5px;
+            }
+            #custom-message-box {
+                padding: 20px;
+                width: 90%;
+            }
+            #custom-message-box p {
+                font-size: 1em;
             }
         }
     </style>
@@ -214,6 +262,7 @@
                     animation-mixer="clip: *; loop: repeat; clampWhenFinished: true;"
                 ></a-gltf-model>
 
+                <!-- Checkpoint Markers (Spheres) -->
                 <a-sphere
                     data-checkpoint-id="1"
                     position="-0.025 0 0.025"
@@ -264,7 +313,7 @@
                     class="checkpoint-marker"
                 ></a-sphere>
 
-                </a-entity>
+            </a-entity>
         </a-entity>
 
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
@@ -279,14 +328,20 @@
         </div>
     </div>
 
+    <!-- Custom Message Box for alerts -->
+    <div id="custom-message-box">
+        <p id="custom-message-text"></p>
+        <button id="custom-message-button">OK</button>
+    </div>
+
     <script>
         // Checkpoint data (same as before, ensure URLs match your checkpoint pages)
         const CHECKPOINTS_DATA = [
-            { id: 1, name: 'Checkpoint 1: The Mystical Flower', description: 'A vibrant floral spot.', url: 'checkpoint_1.html?checkpointId=1' },
-            { id: 2, name: 'Checkpoint 2: Woodpecker\'s Perch', description: 'Home to the elusive woodpecker.', url: 'checkpoint_1.html?checkpointId=2' },
-            { id: 3, name: 'Checkpoint 3: Margarita Meadows', description: 'A beautiful expanse of Margarita Flower Bushes.', url: 'checkpoint_1.html?checkpointId=3' },
-            { id: 4, name: 'Checkpoint 4: Serpent\'s Slumber', description: 'Learn about the fascinating reptiles inhabiting this area.', url: 'checkpoint_1.html?checkpointId=4' },
-            { id: 5, name: 'Checkpoint 5: Crystal Tree Haven', description: 'Uncover the legends of the Japanese Tree Crystal.', url: 'checkpoint_1.html?checkpointId=5' },
+            { id: 1, name: 'Checkpoint 1: The Mystical Flower', description: 'A vibrant floral spot. Tap to learn more and experience it in AR!', url: 'checkpoint_1.html?checkpointId=1' },
+            { id: 2, name: 'Checkpoint 2: Woodpecker\'s Perch', description: 'Home to the elusive woodpecker. Tap to learn more and experience it in AR!', url: 'checkpoint_1.html?checkpointId=2' },
+            { id: 3, name: 'Checkpoint 3: Margarita Meadows', description: 'A beautiful expanse of Margarita Flower Bushes. Tap to learn more and experience it in AR!', url: 'checkpoint_1.html?checkpointId=3' },
+            { id: 4, name: 'Checkpoint 4: Serpent\'s Slumber', description: 'Learn about the fascinating reptiles inhabiting this area. Tap to learn more and experience it in AR!', url: 'checkpoint_1.html?checkpointId=4' },
+            { id: 5, name: 'Checkpoint 5: Crystal Tree Haven', description: 'Uncover the legends of the Japanese Tree Crystal. Tap to learn more and experience it in AR!', url: 'checkpoint_1.html?checkpointId=5' },
             // Add more checkpoints as needed
         ];
 
@@ -301,6 +356,25 @@
         const closeInfoPanelButton = document.getElementById('close-info-panel');
         const goToCheckpointButton = document.getElementById('go-to-checkpoint');
         let currentCheckpointId = null;
+
+        // Custom Message Box elements
+        const customMessageBox = document.getElementById('custom-message-box');
+        const customMessageText = document.getElementById('custom-message-text');
+        const customMessageButton = document.getElementById('custom-message-button');
+
+        /**
+         * Displays a custom message box to the user.
+         * @param {string} message The message to display.
+         * @param {function} onOkCallback Function to call when OK button is clicked.
+         */
+        function showCustomMessage(message, onOkCallback = () => {}) {
+            customMessageText.textContent = message;
+            customMessageBox.style.display = 'flex'; // Show the message box
+            customMessageButton.onclick = () => {
+                customMessageBox.style.display = 'none'; // Hide the message box
+                onOkCallback(); // Execute callback
+            };
+        }
 
         // Function to display the info panel for a checkpoint
         function displayInfoPanel(checkpoint) {
@@ -343,10 +417,12 @@
                 });
             } else {
                 console.error("MindAR image target entity not found. Is your A-Frame scene correctly structured?");
+                showCustomMessage("AR target detection module not found. Please ensure all AR scripts are loaded correctly.");
             }
 
             // Event listener for checkpoint markers
             mainArScene.addEventListener('click', (evt) => {
+                // Ensure intersection is valid and the clicked entity has the 'checkpoint-marker' class
                 const clickedEntity = evt.detail.intersection && evt.detail.intersection.object.el;
                 if (clickedEntity && clickedEntity.classList.contains('checkpoint-marker')) {
                     const checkpointId = clickedEntity.getAttribute('data-checkpoint-id');
@@ -354,6 +430,9 @@
                     if (checkpoint) {
                         displayInfoPanel(checkpoint);
                         console.log(`Checkpoint ${checkpoint.id} clicked!`);
+                    } else {
+                        console.warn(`Checkpoint data not found for ID: ${checkpointId}`);
+                        showCustomMessage(`Details for Checkpoint ${checkpointId} not available.`);
                     }
                 }
             });
@@ -362,14 +441,19 @@
             closeInfoPanelButton.addEventListener('click', hideInfoPanel);
             goToCheckpointButton.addEventListener('click', () => {
                 if (currentCheckpointId !== null) {
-                    const checkpoint = CHECKPOINT_DATA.find(cp => cp.id === currentCheckpointId);
+                    // FIX: Changed CHECKPOINT_DATA to CHECKPOINTS_DATA
+                    const checkpoint = CHECKPOINTS_DATA.find(cp => cp.id === currentCheckpointId);
                     if (checkpoint) {
                         window.location.href = checkpoint.url; // Navigate to checkpoint page
+                    } else {
+                        console.error(`Checkpoint data for ID ${currentCheckpointId} not found when trying to navigate.`);
+                        showCustomMessage(`Could not navigate to checkpoint ${currentCheckpointId}. Data missing.`);
                     }
+                } else {
+                    showCustomMessage("No checkpoint selected to navigate to.");
                 }
             });
         });
     </script>
 </body>
 </html>
->>>>>>> 6e1a3597db8a9580f68bc0e0f7107340ecb7bb97
