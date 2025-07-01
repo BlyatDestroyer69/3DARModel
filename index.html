@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bukit Kiara AR World - WebXR Experience</title>
+    <title>Bukit Kiara AR World - Scan to Enter</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <!-- Embedded CSS from style.css and bukitkiaramap.html's style -->
+    <!-- MindAR.js for initial marker detection -->
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.1/dist/mindar-image-aframe.prod.js"></script>
+
     <style>
-        /* General Body and Font Styles */
         body {
             margin: 0;
-            overflow: hidden; /* Prevent scrolling on main body */
+            overflow: hidden;
             font-family: 'Inter', sans-serif;
             background-color: #f0f0f0;
-            color: #333;
         }
 
         /* Loading Screen */
@@ -54,8 +55,8 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Welcome Screen */
-        .welcome-screen {
+        /* Welcome Screen Styles */
+        #welcome-screen {
             position: absolute;
             top: 0;
             left: 0;
@@ -72,50 +73,42 @@
             transition: opacity 1s ease-in-out;
         }
 
-        .welcome-screen.hidden {
+        #welcome-screen.hidden {
             opacity: 0;
             pointer-events: none;
         }
 
-        .welcome-screen h1 {
+        #welcome-screen h1 {
             font-size: 3em;
             margin-bottom: 20px;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
-        .welcome-screen p {
+        #welcome-screen p {
             font-size: 1.2em;
             margin-bottom: 40px;
             max-width: 600px;
             line-height: 1.6;
         }
 
-        /* Common Action Button Style */
-        .action-button {
-            background-color: #2ecc71; /* Green */
+        #welcome-button {
+            background-color: #2ecc71;
             color: white;
             padding: 15px 30px;
             border: none;
-            border-radius: 10px; /* Rounded corners */
+            border-radius: 8px;
             font-size: 1.5em;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            outline: none; /* Remove outline on focus */
         }
 
-        .action-button:hover {
-            background-color: #27ae60; /* Darker green on hover */
+        #welcome-button:hover {
+            background-color: #27ae60;
             transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
         }
 
-        .action-button:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-
-        /* MindAR A-Frame Scene */
+        /* AR Scene for Scanning */
         a-scene {
             position: absolute;
             top: 0;
@@ -131,8 +124,7 @@
             opacity: 1; /* Visible when active */
         }
 
-        /* Scan Message Overlay */
-        .scan-message {
+        #scan-message {
             position: absolute;
             bottom: 20px;
             left: 50%;
@@ -145,306 +137,57 @@
             text-align: center;
             z-index: 50; /* Above AR scene */
             display: none; /* Hidden until AR scene is active */
-            transition: background-color 0.3s ease;
-        }
-
-        /* WebXR AR Experience Container */
-        .ar-experience {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            display: none; /* Hidden by default, activated by JS */
-            flex-direction: column;
-            justify-content: flex-end; /* Align UI to bottom */
-            align-items: center;
-            z-index: 10;
-        }
-
-        .ar-experience canvas {
-            display: block;
-            width: 100% !important;
-            height: 100% !important;
-            background-color: transparent; /* AR content will show camera feed */
-        }
-
-        /* AR Overlay UI for Buttons */
-        .ar-overlay-ui {
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            gap: 15px; /* Space between buttons */
-            z-index: 12;
-            pointer-events: none; /* Allow clicks to pass through to canvas by default */
-            padding: 0 10px; /* Add some padding for smaller screens */
-            box-sizing: border-box;
-            flex-wrap: wrap; /* Allow buttons to wrap on small screens */
-        }
-
-        .ar-overlay-ui .action-button {
-            pointer-events: all; /* Re-enable clicks for buttons */
-            padding: 12px 20px; /* Slightly smaller buttons for AR UI */
-            font-size: 1em;
-            background-color: rgba(52, 152, 219, 0.8); /* Blue with transparency */
-            border: 2px solid white;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-        }
-
-        .ar-overlay-ui .action-button:hover {
-            background-color: rgba(41, 128, 185, 0.9); /* Darker blue on hover */
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-        }
-
-        .ar-overlay-ui .action-button.hidden {
-            display: none;
-        }
-
-        /* Camera Permission Message */
-        .permission-message {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            z-index: 15;
-            display: none; /* Hidden by default */
-        }
-
-        .permission-message .action-button {
-            margin-top: 15px;
-            padding: 10px 20px;
-            font-size: 1em;
-            background-color: #e74c3c; /* Red for permission buttons */
-        }
-
-        .permission-message .action-button:hover {
-            background-color: #c0392b;
-        }
-
-        .permission-message.hidden {
-            display: none;
-        }
-
-        /* Fallback 3D Viewer */
-        .fallback-viewer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            display: none; /* Hidden by default */
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background-color: #333; /* Dark background for fallback */
-            color: white;
-            z-index: 5;
-        }
-
-        .fallback-viewer canvas {
-            width: 100% !important;
-            height: 70vh !important; /* Take up most of the screen */
-            display: block;
-            background-color: #444;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-        }
-
-        .fallback-info {
-            text-align: center;
-            margin-top: 20px;
-            padding: 0 20px;
-        }
-
-        .fallback-info h2 {
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
-
-        .fallback-info p {
-            font-size: 1.1em;
-            line-height: 1.5;
-            margin-bottom: 20px;
-        }
-
-        .fallback-info .action-button {
-            background-color: #f39c12; /* Orange for fallback button */
-        }
-
-        .fallback-info .action-button:hover {
-            background-color: #e67e22;
-        }
-
-        .fallback-viewer.active {
-            display: flex;
-        }
-
-        /* --- Styles for the new Map Viewer --- */
-        #map-viewer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            display: none; /* Hidden by default */
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background-color: #e0e0e0; /* Light background for map */
-            color: #333;
-            z-index: 20; /* Ensure it's above other main sections */
-        }
-
-        #map-viewer canvas {
-            display: block;
-            width: 100% !important;
-            height: 100% !important;
-            background-color: #eee;
-        }
-
-        .hotspot-label {
-            position: absolute;
-            background-color: #3498db;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 14px;
-            pointer-events: auto;
-            cursor: pointer;
-            user-select: none;
-            white-space: nowrap;
-            transform: translate(-50%, -100%);
-            opacity: 0.8;
-            transition: opacity 0.3s ease;
-            z-index: 10;
-        }
-        .hotspot-label:hover {
-            opacity: 1;
-        }
-
-        #map-viewer-controls {
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            z-index: 25;
-            padding: 0 10px;
-            box-sizing: border-box;
-            flex-wrap: wrap;
-        }
-
-        #map-viewer-controls .action-button {
-            padding: 12px 20px;
-            font-size: 1em;
-            background-color: rgba(52, 152, 219, 0.8);
-            border: 2px solid white;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-        }
-
-        #map-viewer-controls .action-button:hover {
-            background-color: rgba(41, 128, 185, 0.9);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
         }
 
         /* Responsive Adjustments */
         @media (max-width: 768px) {
-            .welcome-screen h1 {
+            #welcome-screen h1 {
                 font-size: 2.2em;
             }
-            .welcome-screen p {
+            #welcome-screen p {
                 font-size: 1em;
                 padding: 0 15px;
             }
-            .action-button {
+            #welcome-button {
                 padding: 12px 25px;
                 font-size: 1.2em;
             }
-            .scan-message {
+            #scan-message {
                 font-size: 1em;
                 padding: 8px 15px;
-            }
-            .ar-overlay-ui, #map-viewer-controls {
-                flex-direction: column; /* Stack buttons vertically */
-                gap: 10px;
-                bottom: 10px;
-            }
-            .ar-overlay-ui .action-button, #map-viewer-controls .action-button {
-                width: calc(100% - 20px); /* Full width minus padding */
-                max-width: 300px; /* Limit max width */
-                margin: 0 auto; /* Center buttons */
-            }
-            .fallback-viewer canvas {
-                height: 60vh !important;
-            }
-            .fallback-info h2 {
-                font-size: 1.8em;
-            }
-            .fallback-info p {
-                font-size: 0.9em;
             }
         }
 
         @media (max-width: 480px) {
-            .welcome-screen h1 {
+            #welcome-screen h1 {
                 font-size: 1.8em;
             }
-            .welcome-screen p {
+            #welcome-screen p {
                 font-size: 0.9em;
             }
-            .action-button {
+            #welcome-button {
                 padding: 10px 20px;
                 font-size: 1em;
             }
-            .scan-message {
+            #scan-message {
                 font-size: 0.9em;
                 padding: 6px 12px;
             }
-            .fallback-viewer canvas {
-                height: 50vh !important;
-            }
         }
     </style>
-
-    <!-- A-Frame and MindAR.js for initial marker detection -->
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.1/dist/mindar-image-aframe.prod.js"></script>
-
-    <!-- Three.js and its addons for WebXR and 3D rendering -->
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
-                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
-            }
-        }
-    </script>
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div id="loading-screen" class="loading-screen">
+    <div id="loading-screen" class="loading-screen hidden">
         <div class="spinner"></div>
-        <p>Loading AR World...</p>
+        <p>Loading...</p>
     </div>
 
-    <!-- Welcome Screen -->
-    <div id="welcome-screen" class="welcome-screen">
+    <div id="welcome-screen">
         <h1>Welcome to Bukit Kiara AR World!</h1>
         <p>Scan the special map to unlock the interactive 3D experience.</p>
-        <button id="welcome-button" class="action-button">Start Scanning</button>
+        <button id="welcome-button">Start Scanning</button>
     </div>
 
-    <!-- MindAR A-Frame Scene for Marker Detection -->
     <a-scene
         id="ar-scan-scene"
         mindar-image="imageTargetSrc: ./assets/targets.mind; showImage: false;"
@@ -458,866 +201,70 @@
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
     </a-scene>
 
-    <!-- Message Overlay for Scanning -->
-    <div id="scan-message" class="scan-message">Please scan the Bukit Kiara map.</div>
+    <div id="scan-message">Please scan the Bukit Kiara map.</div>
 
-    <!-- WebXR AR Experience Container -->
-    <div id="ar-experience" class="ar-experience">
-        <canvas id="ar-canvas"></canvas>
-        <div id="ar-overlay-ui" class="ar-overlay-ui">
-            <button id="place-model-button" class="action-button hidden">Place Model</button>
-            <button id="reset-model-button" class="action-button hidden">Reset Model</button>
-            <button id="toggle-manipulation-button" class="action-button hidden">Enable Manipulation</button>
-            <button id="view-map-button" class="action-button hidden">View Map</button>
-        </div>
-        <div id="camera-permission-message" class="permission-message hidden">
-            <p>Please grant camera access to experience AR.</p>
-            <button id="grant-camera-button" class="action-button">Grant Access</button>
-        </div>
-        <div id="ar-unsupported-message" class="permission-message hidden">
-            <p>Your browser or device does not support WebXR AR. Falling back to 3D viewer mode.</p>
-            <button id="return-to-home" class="action-button">Return to Home</button>
-        </div>
-    </div>
-
-    <!-- Fallback 3D Viewer Container (for non-AR devices) -->
-    <div id="fallback-viewer" class="fallback-viewer">
-        <canvas id="fallback-canvas"></canvas>
-        <div class="fallback-info">
-            <h2>3D Model Viewer</h2>
-            <p>This is a fallback 3D viewer because your device does not support WebXR AR. You can drag to rotate the model.</p>
-            <button id="fallback-return-button" class="action-button">Return to Home</button>
-        </div>
-    </div>
-
-    <!-- New Map Viewer Container -->
-    <div id="map-viewer">
-        <canvas id="map-canvas"></canvas>
-        <div id="map-viewer-controls">
-            <button id="map-back-to-ar-button" class="action-button">Back to AR</button>
-            <button id="map-return-to-home-button" class="action-button">Return to Home</button>
-        </div>
-    </div>
-
-    <!-- Embedded JavaScript from main.js -->
-    <script type="module">
-        import * as THREE from 'three';
-        import { FBXLoader } from 'three/addons/loaders/FBXLoader.js'; // Using FBXLoader for all models
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { TransformControls } from 'three/addons/controls/TransformControls.js';
-
-        // --- DOM Elements ---
-        const loadingScreen = document.getElementById('loading-screen');
+    <script>
         const welcomeScreen = document.getElementById('welcome-screen');
         const welcomeButton = document.getElementById('welcome-button');
         const arScanScene = document.getElementById('ar-scan-scene');
         const scanMessage = document.getElementById('scan-message');
-        const arExperienceDiv = document.getElementById('ar-experience');
-        const arCanvas = document.getElementById('ar-canvas');
-        const placeModelButton = document.getElementById('place-model-button');
-        const resetModelButton = document.getElementById('reset-model-button');
-        const toggleManipulationButton = document.getElementById('toggle-manipulation-button');
-        const viewMapButton = document.getElementById('view-map-button'); // New button
-        const cameraPermissionMessage = document.getElementById('camera-permission-message');
-        const grantCameraButton = document.getElementById('grant-camera-button');
-        const arUnsupportedMessage = document.getElementById('ar-unsupported-message');
-        const returnToHomeButton = document.getElementById('return-to-home');
-        const fallbackViewerDiv = document.getElementById('fallback-viewer');
-        const fallbackCanvas = document.getElementById('fallback-canvas');
-        const fallbackReturnButton = document.getElementById('fallback-return-button');
+        const loadingScreen = document.getElementById('loading-screen'); // Get loading screen
 
-        // Map Viewer DOM Elements
-        const mapViewerDiv = document.getElementById('map-viewer');
-        const mapCanvas = document.getElementById('map-canvas');
-        const mapBackToArButton = document.getElementById('map-back-to-ar-button');
-        const mapReturnToHomeButton = document.getElementById('map-return-to-home-button');
+        let targetDetected = false; // Flag to prevent multiple redirects
 
-        // --- Three.js & WebXR Variables (AR Experience) ---
-        let arScene, arCamera, arRenderer, arSession;
-        let arReferenceSpace;
-        let arHitTestSource = null;
-        let arLoadedModel = null; // This will be the AR placed model (e.g., the map)
-        let reticle = null;
-        let modelPlaced = false;
-        let transformControls = null;
-        let manipulationEnabled = false;
-
-        // --- Three.js & WebXR Variables (Map Viewer) ---
-        let mapScene, mapCamera, mapRenderer, mapControls;
-        let mapLoadedModel = null; // This will be the 3D map viewer model
-        let mapAnimateId = null;
-        const hotspots = []; // Array to store hotspot objects and their DOM labels
-
-        // --- Fallback Viewer Variables ---
-        let fallbackScene, fallbackCamera, fallbackRenderer, fallbackControls;
-        let fallbackLoadedModel = null;
-        let fallbackAnimateId = null;
-
-        // --- Loading Manager ---
-        const manager = new THREE.LoadingManager();
-        manager.onStart = function (url, itemsLoaded, itemsTotal) {
-            console.log('Started loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.');
+        // Show loading screen before redirect
+        function showLoading() {
             loadingScreen.classList.remove('hidden');
-        };
-        manager.onLoad = function () {
-            console.log('Loading complete!');
-            // Hide loading screen after a small delay to ensure everything is rendered
-            setTimeout(() => {
-                loadingScreen.classList.add('hidden');
-            }, 500);
-        };
-        manager.onProgress = function (url, itemsLoaded, itemsTotal) {
-            console.log('Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.');
-        };
-        manager.onError = function (url) {
-            console.error('There was an error loading ' + url);
-            loadingScreen.classList.add('hidden'); // Hide loading screen even on error
-        };
-
-        const fbxLoader = new FBXLoader(manager); // Using FBXLoader for all models
-
-        // --- Model Paths (Customize these) ---
-        // IMPORTANT: Replace 'YOUR_HOSTED_MODEL_URL_HERE' with the actual URL from your hosting service.
-        // Ensure your FBX file is named 'bukit_kiara_map.fbx' or update the filename accordingly.
-        const AR_MODEL_PATH = 'YOUR_HOSTED_MODEL_URL_HERE/bukit_kiara_map.fbx'; // The map model to be placed in AR
-        const MAP_MODEL_PATH = 'YOUR_HOSTED_MODEL_URL_HERE/bukit_kiara_map.fbx'; // The map model for the 3D viewer
-        const FALLBACK_MODEL_PATH = 'YOUR_HOSTED_MODEL_URL_HERE/bukit_kiara_map.fbx'; // Same model for fallback
-
-        // --- Utility Functions for View Management ---
-        function hideAllViews() {
-            welcomeScreen.classList.add('hidden');
-            arScanScene.classList.remove('active');
-            arScanScene.setAttribute('visible', 'false');
-            scanMessage.style.display = 'none';
-            arExperienceDiv.style.display = 'none';
-            cameraPermissionMessage.classList.add('hidden');
-            arUnsupportedMessage.classList.add('hidden');
-            fallbackViewerDiv.classList.remove('active');
-            mapViewerDiv.style.display = 'none';
         }
 
-        function showWelcomeScreen() {
-            hideAllViews();
-            welcomeScreen.classList.remove('hidden');
-            disposeARExperience();
-            disposeMapViewer();
-            disposeFallbackViewer();
+        // Hide loading screen
+        function hideLoading() {
+            loadingScreen.classList.add('hidden');
         }
 
-        function showArScanner() {
-            hideAllViews();
-            arScanScene.setAttribute('visible', 'true');
-            arScanScene.classList.add('active');
-            scanMessage.style.display = 'block';
-        }
-
-        function showArExperience() {
-            hideAllViews();
-            arExperienceDiv.style.display = 'flex';
-        }
-
-        function showMapViewer() {
-            hideAllViews();
-            mapViewerDiv.style.display = 'flex';
-            initMapViewer(); // Initialize map viewer when shown
-        }
-
-        function showFallbackViewer() {
-            hideAllViews();
-            fallbackViewerDiv.classList.add('active');
-            initFallbackViewer();
-        }
-
-        // --- Event Listeners ---
         welcomeButton.addEventListener('click', () => {
-            showArScanner();
-            console.log("AR Scanner Activated. Please scan the map target.");
+            welcomeScreen.classList.add('hidden');
+            welcomeScreen.addEventListener('transitionend', () => {
+                arScanScene.setAttribute('visible', 'true'); // Activate A-Frame scene
+                arScanScene.classList.add('active'); // Fade in A-Frame scene
+                scanMessage.style.display = 'block'; // Show scan message
+                console.log("AR Scanner Activated. Please scan the map target.");
+            }, { once: true });
         });
 
-        // MindAR target found event
         document.addEventListener('DOMContentLoaded', () => {
             const mindarImageTargetEntity = document.querySelector('a-entity[mindar-image-target]');
 
             if (mindarImageTargetEntity) {
                 mindarImageTargetEntity.addEventListener('targetFound', () => {
-                    console.log("Map Target Found! Initiating WebXR AR experience...");
-                    scanMessage.textContent = "Map detected! Preparing AR experience...";
-                    scanMessage.style.backgroundColor = 'rgba(46, 204, 113, 0.8)'; // Green background
+                    if (!targetDetected) { // Only redirect on first detection
+                        targetDetected = true;
+                        console.log("Map Target Found! Redirecting to 3D map viewer...");
+                        scanMessage.textContent = "Map detected! Loading 3D experience...";
+                        scanMessage.style.backgroundColor = 'rgba(46, 204, 113, 0.8)'; // Green background
+                        
+                        showLoading(); // Show loading screen before redirect
+                        // Redirect after a short delay to show the message
+                        setTimeout(() => {
+                            window.location.href = 'bukitkiaramap.html';
+                        }, 1500); // 1.5 seconds delay
+                    }
+                });
 
-                    // Hide MindAR scene and message
-                    arScanScene.classList.remove('active');
-                    arScanScene.setAttribute('visible', 'false');
-                    scanMessage.style.display = 'none';
-
-                    // Start WebXR AR experience
-                    startWebXR();
-                }, { once: true }); // Use { once: true } to only trigger once
+                mindarImageTargetEntity.addEventListener('targetLost', () => {
+                    // If target is lost before redirection, reset message
+                    if (!targetDetected) {
+                        scanMessage.textContent = "Please scan the Bukit Kiara map.";
+                        scanMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'; // Back to black
+                    }
+                });
             } else {
                 console.error("MindAR image target entity not found. Is your A-Frame scene correctly structured?");
             }
-
-            // Initial check for WebXR support on page load to set up fallback if needed
-            if (!navigator.xr || !navigator.xr.isSessionSupported) {
-                console.warn("WebXR API not detected. Fallback 3D viewer will be used.");
-            }
         });
 
-        grantCameraButton.addEventListener('click', async () => {
-            cameraPermissionMessage.classList.add('hidden'); // Hide message temporarily
-            // Attempt to access camera to trigger permission prompt
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                stream.getTracks().forEach(track => track.stop()); // Stop stream immediately
-                console.log("Camera access granted. Retrying AR experience.");
-                startWebXR(); // Retry entering AR
-            } catch (err) {
-                console.error("Failed to grant camera access:", err);
-                // Using a custom message box instead of alert
-                showCustomMessage("Camera access denied. AR experience cannot proceed without camera permission.", () => {
-                    cameraPermissionMessage.classList.remove('hidden'); // Re-show message if still denied
-                });
-            }
-        });
-
-        returnToHomeButton.addEventListener('click', showWelcomeScreen);
-        fallbackReturnButton.addEventListener('click', showWelcomeScreen);
-        mapReturnToHomeButton.addEventListener('click', showWelcomeScreen);
-
-        placeModelButton.addEventListener('click', onPlaceModelButtonClick);
-        resetModelButton.addEventListener('click', onResetModelButtonClick);
-        toggleManipulationButton.addEventListener('click', onToggleManipulationButtonClick);
-        viewMapButton.addEventListener('click', () => {
-            disposeARExperience(); // Clean up AR resources
-            showMapViewer(); // Show the map viewer
-        });
-        mapBackToArButton.addEventListener('click', () => {
-            // This button assumes you want to go back to the AR experience
-            // after viewing the map. This might require re-initiating the AR session.
-            // For simplicity, for now, it will return to the welcome screen.
-            // A more advanced implementation would save AR state or allow re-entry.
-            showWelcomeScreen(); // For now, return to welcome screen to restart AR flow
-            showCustomMessage("To re-enter AR, please start scanning again from the welcome screen.", () => {});
-        });
-
-
-        // --- WebXR AR Functions ---
-        async function startWebXR() {
-            try {
-                const session = await navigator.xr.requestSession('immersive-ar', {
-                    requiredFeatures: ['hit-test', 'dom-overlay'],
-                    domOverlay: { root: arOverlayUi } // Use arOverlayUi as the DOM overlay
-                });
-                console.log("WebXR immersive-ar session requested.");
-                await initWebXR(session);
-            } catch (e) {
-                console.error("Error starting WebXR AR session:", e);
-                if (e.name === 'NotAllowedError' || e.name === 'SecurityError') {
-                    cameraPermissionMessage.classList.remove('hidden');
-                    showCustomMessage("AR experience requires camera access. Please grant camera permission and ensure the site is served over HTTPS.", () => {});
-                } else {
-                    arUnsupportedMessage.classList.remove('hidden');
-                    showCustomMessage("AR experience could not be started. Error: " + e.message + "\nFalling back to 3D model viewer.", () => {
-                        showFallbackViewer();
-                    });
-                }
-            }
-        }
-
-        async function initWebXR(session) {
-            arSession = session;
-            arSession.addEventListener('end', onXRSessionEnded);
-
-            arRenderer = new THREE.WebGLRenderer({
-                alpha: true,
-                preserveDrawingBuffer: true,
-                canvas: arCanvas,
-                context: arCanvas.getContext('webgl', { xrCompatible: true })
-            });
-            arRenderer.autoClear = false;
-            arRenderer.setPixelRatio(window.devicePixelRatio);
-            arRenderer.setSize(arCanvas.clientWidth, arCanvas.clientHeight);
-            arRenderer.outputEncoding = THREE.sRGBEncoding;
-            arRenderer.xr.enabled = true;
-            arRenderer.xr.setReferenceSpaceType('viewer'); // 'viewer' for initial hit-test, then 'local-floor' for stable placement
-            arRenderer.xr.setSession(arSession);
-
-            arScene = new THREE.Scene();
-
-            // Lighting for AR scene
-            const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
-            arScene.add(ambientLight);
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            directionalLight.position.set(0, 5, 0);
-            arScene.add(directionalLight);
-
-            // Reticle for hit-testing
-            const geometry = new THREE.RingGeometry(0.1, 0.12, 32).rotateX(- Math.PI / 2);
-            const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
-            reticle = new THREE.Mesh(geometry, material);
-            reticle.matrixAutoUpdate = false;
-            reticle.visible = false;
-            arScene.add(reticle);
-
-            // Load the 3D model (the map itself) using FBXLoader
-            fbxLoader.load(AR_MODEL_PATH, (fbx) => {
-                arLoadedModel = fbx;
-                // Scale the model to a reasonable size for AR (e.g., 0.5 meters wide)
-                const box = new THREE.Box3().setFromObject(arLoadedModel);
-                const size = box.getSize(new THREE.Vector3());
-                const maxDim = Math.max(size.x, size.y, size.z);
-                const scaleFactor = 0.5 / maxDim; // Scale to fit within 0.5 units
-                arLoadedModel.scale.set(scaleFactor, scaleFactor, scaleFactor);
-                arLoadedModel.visible = false; // Hide until placed
-                arScene.add(arLoadedModel);
-                console.log("AR Model (Map) loaded successfully (FBX).");
-
-                // Set up TransformControls
-                transformControls = new TransformControls(arCamera, arRenderer.domElement);
-                transformControls.attach(arLoadedModel);
-                transformControls.setMode("translate"); // Default mode
-                transformControls.visible = false; // Hidden initially
-                transformControls.enabled = false; // Disabled initially
-                arScene.add(transformControls);
-
-                // Disable XR input when TransformControls are active
-                transformControls.addEventListener('dragging-changed', function (event) {
-                    arRenderer.xr.enabled = !event.value; // Pause XR rendering if dragging
-                });
-
-            }, undefined, (error) => {
-                console.error('Error loading AR FBX model:', error);
-                showCustomMessage("Error loading 3D model for AR. Please try again later.", () => {});
-            });
-
-            arReferenceSpace = await arSession.requestReferenceSpace('viewer');
-            arHitTestSource = await arSession.requestHitTestSource({ space: arReferenceSpace });
-
-            showArExperience(); // Show AR experience container
-            placeModelButton.classList.remove('hidden'); // Show place button
-            resetModelButton.classList.add('hidden'); // Hide reset button initially
-            toggleManipulationButton.classList.add('hidden'); // Hide manipulation button initially
-            viewMapButton.classList.add('hidden'); // Hide view map button initially
-
-            arRenderer.setAnimationLoop(animateWebXR);
-
-            // Add event listener for selecting (tapping) on the canvas
-            arCanvas.addEventListener('click', onARCanvasClick);
-
-            // Initial state
-            modelPlaced = false;
-        }
-
-        function onXRSessionEnded() {
-            console.log("XR Session Ended.");
-            disposeARExperience();
-            showMapViewer(); // Go to map viewer after AR session ends
-        }
-
-        function animateWebXR(timestamp, frame) {
-            if (!frame) return;
-
-            const referenceSpace = arRenderer.xr.getReferenceSpace();
-
-            if (arLoadedModel && !modelPlaced && arHitTestSource) {
-                const hitTestResults = frame.getHitTestResults(arHitTestSource);
-
-                if (hitTestResults.length > 0) {
-                    const hitPose = hitTestResults[0].getPose(referenceSpace);
-                    reticle.matrix.copy(hitPose.transform.matrix);
-                    reticle.visible = true;
-                    placeModelButton.classList.remove('hidden'); // Show place button if surface detected
-                } else {
-                    reticle.visible = false;
-                    placeModelButton.classList.add('hidden'); // Hide place button if no surface
-                }
-            }
-
-            // Render the scene with the XR camera
-            arRenderer.render(arScene, arRenderer.xr.getCamera(new THREE.PerspectiveCamera()));
-        }
-
-        function onARCanvasClick(event) {
-            if (arSession && arLoadedModel && !modelPlaced && reticle.visible) {
-                // Place model at reticle position
-                arLoadedModel.position.setFromMatrixPosition(reticle.matrix);
-                arLoadedModel.quaternion.setFromRotationMatrix(reticle.matrix);
-                arLoadedModel.visible = true;
-                modelPlaced = true;
-                reticle.visible = false;
-                placeModelButton.classList.add('hidden');
-                resetModelButton.classList.remove('hidden');
-                toggleManipulationButton.classList.remove('hidden');
-                viewMapButton.classList.remove('hidden'); // Show view map button after placement
-                console.log("AR Model placed at:", arLoadedModel.position);
-            }
-        }
-
-        function onPlaceModelButtonClick() {
-            if (arSession && arLoadedModel && !modelPlaced && reticle.visible) {
-                arLoadedModel.position.setFromMatrixPosition(reticle.matrix);
-                arLoadedModel.quaternion.setFromRotationMatrix(reticle.matrix);
-                arLoadedModel.visible = true;
-                modelPlaced = true;
-                reticle.visible = false;
-                placeModelButton.classList.add('hidden');
-                resetModelButton.classList.remove('hidden');
-                toggleManipulationButton.classList.remove('hidden');
-                viewMapButton.classList.remove('hidden'); // Show view map button after placement
-                console.log("AR Model placed via button at:", arLoadedModel.position);
-            }
-        }
-
-        function onResetModelButtonClick() {
-            modelPlaced = false;
-            if (arLoadedModel) {
-                arLoadedModel.visible = false;
-            }
-            if (transformControls) {
-                transformControls.detach();
-                transformControls.visible = false;
-                transformControls.enabled = false;
-                manipulationEnabled = false;
-                toggleManipulationButton.textContent = "Enable Manipulation";
-            }
-            placeModelButton.classList.remove('hidden');
-            resetModelButton.classList.add('hidden');
-            toggleManipulationButton.classList.add('hidden');
-            viewMapButton.classList.add('hidden'); // Hide view map button on reset
-            console.log("AR Model reset.");
-        }
-
-        function onToggleManipulationButtonClick() {
-            if (!arLoadedModel) return;
-
-            manipulationEnabled = !manipulationEnabled;
-
-            if (manipulationEnabled) {
-                transformControls.attach(arLoadedModel);
-                transformControls.setMode("translate"); // Default mode for manipulation
-                transformControls.visible = true;
-                transformControls.enabled = true;
-                toggleManipulationButton.textContent = "Disable Manipulation";
-                console.log("Manipulation enabled.");
-            } else {
-                transformControls.detach();
-                transformControls.visible = false;
-                transformControls.enabled = false;
-                toggleManipulationButton.textContent = "Enable Manipulation";
-                console.log("Manipulation disabled.");
-            }
-        }
-
-        function disposeARExperience() {
-            if (arSession) {
-                arSession.end(); // End the XR session
-                arSession = null;
-            }
-            if (arHitTestSource) {
-                arHitTestSource.cancel();
-                arHitTestSource = null;
-            }
-            if (arRenderer) {
-                arRenderer.setAnimationLoop(null); // Stop animation loop
-                arRenderer.dispose();
-                arRenderer = null;
-            }
-            if (arScene) {
-                arScene.traverse(obj => {
-                    if (obj.isMesh) {
-                        if (obj.geometry) obj.geometry.dispose();
-                        if (obj.material) {
-                            if (Array.isArray(obj.material)) {
-                                obj.material.forEach(material => material.dispose());
-                            } else {
-                                obj.material.dispose();
-                            }
-                        }
-                    }
-                });
-                arScene.clear();
-                arScene = null;
-            }
-            if (arLoadedModel) {
-                arLoadedModel = null;
-            }
-            if (reticle) {
-                if (arScene) arScene.remove(reticle); // Ensure reticle is removed if scene exists
-                if (reticle.geometry) reticle.geometry.dispose();
-                if (reticle.material) reticle.material.dispose();
-                reticle = null;
-            }
-            if (transformControls) {
-                transformControls.dispose();
-                transformControls = null;
-            }
-            arCanvas.removeEventListener('click', onARCanvasClick);
-            placeModelButton.classList.add('hidden');
-            resetModelButton.classList.add('hidden');
-            toggleManipulationButton.classList.add('hidden');
-            viewMapButton.classList.add('hidden');
-            modelPlaced = false;
-            manipulationEnabled = false;
-        }
-
-        // --- Map Viewer Functions ---
-        function initMapViewer() {
-            disposeMapViewer(); // Clean up any previous instance
-
-            mapScene = new THREE.Scene();
-            mapScene.background = new THREE.Color(0xe0e0e0); // Light background for map
-
-            mapCamera = new THREE.PerspectiveCamera(45, mapCanvas.clientWidth / mapCanvas.clientHeight, 0.1, 1000);
-            mapCamera.position.set(0, 5, 10); // Position camera to view map
-
-            mapRenderer = new THREE.WebGLRenderer({ canvas: mapCanvas, antialias: true });
-            mapRenderer.setSize(mapCanvas.clientWidth, mapCanvas.clientHeight);
-            mapRenderer.setPixelRatio(window.devicePixelRatio);
-            mapRenderer.outputEncoding = THREE.sRGBEncoding;
-
-            mapControls = new OrbitControls(mapCamera, mapRenderer.domElement);
-            mapControls.target.set(0, 1, 0); // Focus controls on the center of the map
-            mapControls.enableDamping = true;
-            mapControls.dampingFactor = 0.1;
-            mapControls.minDistance = 1;
-            mapControls.maxDistance = 20;
-
-            // Lighting for map scene
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-            mapScene.add(ambientLight);
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            directionalLight.position.set(5, 10, 7.5);
-            directionalLight.castShadow = true;
-            mapScene.add(directionalLight);
-
-            // Load the FBX map model
-            fbxLoader.load(MAP_MODEL_PATH, (fbx) => {
-                mapLoadedModel = fbx;
-                mapScene.add(mapLoadedModel);
-
-                // Example Hotspot Data (replace with actual data from your model/config)
-                // In a real scenario, you'd parse this from the FBX userData or a separate JSON.
-                const exampleHotspots = [
-                    { position: new THREE.Vector3(0, 0.5, 1), name: "Checkpoint 1", description: "Learn about the Colored Flower", targetUrl: "checkpoint_1.html" },
-                    { position: new THREE.Vector3(2, 0.8, -1), name: "Checkpoint 2", description: "Discover the Hairy Woodpecker", targetUrl: "checkpoint_2.html" },
-                    { position: new THREE.Vector3(-1.5, 0.3, -2), name: "Checkpoint 3", description: "The Margarita Flower Bush", targetUrl: "checkpoint_3.html" }
-                ];
-
-                exampleHotspots.forEach(data => {
-                    createHotspot(data.position, data.name, data.description, data.targetUrl);
-                });
-
-                console.log("Map Model loaded and hotspots created.");
-            }, undefined, (error) => {
-                console.error('Error loading Map FBX model:', error);
-                showCustomMessage("Error loading 3D map model. Please try again later.", () => {});
-            });
-
-            animateMapViewer();
-            window.addEventListener('resize', onMapWindowResize);
-
-            // Raycaster for hotspot interaction on map viewer
-            mapCanvas.addEventListener('click', onMapCanvasClick);
-        }
-
-        // Create hotspot label and store reference
-        function createHotspot(position, name, description, targetUrl) {
-            const label = document.createElement('div');
-            label.className = 'hotspot-label';
-            label.textContent = name;
-            label.title = description;
-            label.style.position = 'absolute';
-            label.style.pointerEvents = 'auto'; // Ensure clicks are captured
-            label.style.cursor = 'pointer';
-
-            label.addEventListener('click', () => {
-                console.log(`Clicked hotspot: ${name}. Navigating to: ${targetUrl}`);
-                // Here you would typically load the content of checkpoint_X.html
-                // For now, we'll just log and you can implement the actual content loading
-                // or dynamic display of checkpoint details.
-                showCustomMessage(`You clicked ${name}! (Would navigate to ${targetUrl} or show details here)`, () => {
-                    // If you want to actually navigate:
-                    // window.location.href = targetUrl;
-                });
-            });
-
-            mapViewerDiv.appendChild(label); // Append to map viewer div
-
-            // Create a small visual marker in 3D space for the hotspot
-            const markerGeometry = new THREE.SphereGeometry(0.1, 16, 16);
-            const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.7 });
-            const marker = new THREE.Mesh(markerGeometry, markerMaterial);
-            marker.position.copy(position);
-            marker.userData.isHotspot = true; // Mark for raycasting
-            marker.userData.targetUrl = targetUrl;
-            marker.userData.name = name;
-            mapScene.add(marker);
-
-            hotspots.push({ node: marker, label: label });
-        }
-
-        // Update hotspot label positions on render
-        function updateHotspots() {
-            hotspots.forEach(({ node, label }) => {
-                const pos = new THREE.Vector3();
-                node.getWorldPosition(pos);
-                pos.project(mapCamera);
-
-                const x = (pos.x * 0.5 + 0.5) * mapCanvas.clientWidth;
-                const y = (-pos.y * 0.5 + 0.5) * mapCanvas.clientHeight;
-
-                label.style.transform = `translate(-50%, -100%) translate(${x}px,${y}px)`;
-
-                // Hide label if behind camera or too far
-                const isVisible = pos.z < 1; // Check if in front of camera
-                label.style.display = isVisible ? 'block' : 'none';
-            });
-        }
-
-        function animateMapViewer() {
-            if (mapRenderer) {
-                mapAnimateId = requestAnimationFrame(animateMapViewer);
-                if (mapControls) mapControls.update();
-                updateHotspots(); // Update hotspot positions
-                mapRenderer.render(mapScene, mapCamera);
-            }
-        }
-
-        function onMapWindowResize() {
-            if (mapCamera && mapRenderer && mapCanvas) {
-                mapCamera.aspect = mapCanvas.clientWidth / mapCanvas.clientHeight;
-                mapCamera.updateProjectionMatrix();
-                mapRenderer.setSize(mapCanvas.clientWidth, mapCanvas.clientHeight);
-                updateHotspots(); // Update hotspot positions after resize
-            }
-        }
-
-        function disposeMapViewer() {
-            if (mapAnimateId) {
-                cancelAnimationFrame(mapAnimateId);
-                mapAnimateId = null;
-            }
-            if (mapScene) {
-                mapScene.traverse(obj => {
-                    if (obj.isMesh) {
-                        if (obj.geometry) obj.geometry.dispose();
-                        if (obj.material) {
-                            if (Array.isArray(obj.material)) {
-                                obj.material.forEach(material => material.dispose());
-                            } else {
-                                obj.material.dispose();
-                            }
-                        }
-                    }
-                });
-                mapScene.clear();
-                mapScene = null;
-            }
-            if (mapRenderer) {
-                mapRenderer.dispose();
-                mapRenderer = null;
-            }
-            if (mapControls) {
-                mapControls.dispose();
-                mapControls = null;
-            }
-            if (mapLoadedModel) {
-                mapLoadedModel = null;
-            }
-            // Remove all hotspot DOM elements
-            hotspots.forEach(({ label }) => {
-                if (label.parentNode) {
-                    label.parentNode.removeChild(label);
-                }
-            });
-            hotspots.length = 0; // Clear the array
-            window.removeEventListener('resize', onMapWindowResize);
-            mapCanvas.removeEventListener('click', onMapCanvasClick);
-        }
-
-        // Raycasting for clicks on 3D objects in the map viewer
-        const mapRaycaster = new THREE.Raycaster();
-        const mapMouse = new THREE.Vector2();
-
-        function onMapCanvasClick(event) {
-            // Calculate mouse position in normalized device coordinates (-1 to +1)
-            mapMouse.x = (event.clientX / mapCanvas.clientWidth) * 2 - 1;
-            mapMouse.y = - (event.clientY / mapCanvas.clientHeight) * 2 + 1;
-
-            mapRaycaster.setFromCamera(mapMouse, mapCamera);
-
-            // Find intersected objects (only hotspots)
-            const intersects = mapRaycaster.intersectObjects(mapScene.children, true);
-
-            for (const intersect of intersects) {
-                if (intersect.object.userData.isHotspot) {
-                    const hotspotName = intersect.object.userData.name;
-                    const targetUrl = intersect.object.userData.targetUrl;
-                    console.log(`3D Hotspot clicked: ${hotspotName}. Target URL: ${targetUrl}`);
-                    showCustomMessage(`You clicked the 3D hotspot: ${hotspotName}! (Would navigate to ${targetUrl} or show details here)`, () => {
-                        // Implement navigation or show checkpoint details here
-                        // For example, if you want to navigate:
-                        // window.location.href = targetUrl;
-                    });
-                    break; // Only handle the first intersected hotspot
-                }
-            }
-        }
-
-
-        // --- Fallback 3D Viewer Functions ---
-        function initFallbackViewer() {
-            disposeFallbackViewer(); // Clean up any previous instance
-
-            fallbackScene = new THREE.Scene();
-            fallbackScene.background = new THREE.Color(0x222222); // Dark background
-
-            fallbackCamera = new THREE.PerspectiveCamera(75, fallbackCanvas.clientWidth / fallbackCanvas.clientHeight, 0.1, 1000);
-            fallbackCamera.position.set(0, 1.5, 3); // Position camera to view model
-
-            fallbackRenderer = new THREE.WebGLRenderer({ canvas: fallbackCanvas, antialias: true });
-            fallbackRenderer.setSize(fallbackCanvas.clientWidth, fallbackCanvas.clientHeight);
-            fallbackRenderer.setPixelRatio(window.devicePixelRatio);
-            fallbackRenderer.outputEncoding = THREE.sRGBEncoding;
-
-            fallbackControls = new OrbitControls(fallbackCamera, fallbackRenderer.domElement);
-            fallbackControls.enableDamping = true;
-            fallbackControls.dampingFactor = 0.1;
-            fallbackControls.minDistance = 1;
-            fallbackControls.maxDistance = 10;
-            fallbackControls.autoRotate = true; // Auto-rotate for aesthetic
-            fallbackControls.autoRotateSpeed = 0.5;
-
-            // Lighting for fallback scene
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-            fallbackScene.add(ambientLight);
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-            directionalLight.position.set(5, 10, 7);
-            fallbackScene.add(directionalLight);
-
-            // Load the 3D model for fallback using FBXLoader
-            fbxLoader.load(FALLBACK_MODEL_PATH, (fbx) => {
-                fallbackLoadedModel = fbx;
-
-                const box = new THREE.Box3().setFromObject(fallbackLoadedModel);
-                const size = box.getSize(new THREE.Vector3());
-                const center = box.getCenter(new THREE.Vector3());
-
-                // Scale the model to fit within the fallback view
-                const maxDim = Math.max(size.x, size.y, size.z);
-                const scaleFactor = 1.5 / maxDim;
-                fallbackLoadedModel.scale.set(scaleFactor, scaleFactor, scaleFactor);
-
-                box.setFromObject(fallbackLoadedModel); // Recalculate box after scaling
-                box.getCenter(center);
-                fallbackLoadedModel.position.sub(center); // Center the model
-
-                fallbackScene.add(fallbackLoadedModel);
-                console.log("Fallback model loaded (FBX).");
-            }, undefined, (error) => {
-                console.error('Error loading fallback FBX model:', error);
-                showCustomMessage("Error loading 3D model for fallback viewer.", () => {});
-            });
-
-            animateFallbackViewer();
-            window.addEventListener('resize', onFallbackWindowResize);
-        }
-
-        function animateFallbackViewer() {
-            if (fallbackRenderer) {
-                fallbackAnimateId = requestAnimationFrame(animateFallbackViewer);
-                if (fallbackControls) fallbackControls.update();
-                fallbackRenderer.render(fallbackScene, fallbackCamera);
-            }
-        }
-
-        function onFallbackWindowResize() {
-            if (fallbackCamera && fallbackRenderer && fallbackCanvas) {
-                fallbackCamera.aspect = fallbackCanvas.clientWidth / fallbackCanvas.clientHeight;
-                fallbackCamera.updateProjectionMatrix();
-                fallbackRenderer.setSize(fallbackCanvas.clientWidth, fallbackCanvas.clientHeight);
-            }
-        }
-
-        function disposeFallbackViewer() {
-            if (fallbackAnimateId) {
-                cancelAnimationFrame(fallbackAnimateId);
-                fallbackAnimateId = null;
-            }
-            if (fallbackScene) {
-                fallbackScene.traverse(obj => {
-                    if (obj.isMesh) {
-                        if (obj.geometry) obj.geometry.dispose();
-                        if (obj.material) {
-                            if (Array.isArray(obj.material)) {
-                                obj.material.forEach(material => material.dispose());
-                            } else {
-                                obj.material.dispose();
-                            }
-                        }
-                    }
-                });
-                fallbackScene.clear();
-                fallbackScene = null;
-            }
-            if (fallbackRenderer) {
-                fallbackRenderer.dispose();
-                fallbackRenderer = null;
-            }
-            if (fallbackControls) {
-                fallbackControls.dispose();
-                fallbackControls = null;
-            }
-            if (fallbackLoadedModel) {
-                fallbackLoadedModel = null;
-            }
-            window.removeEventListener('resize', onFallbackWindowResize);
-        }
-
-        // --- Custom Message Box (instead of alert) ---
-        function showCustomMessage(message, onCloseCallback) {
-            const messageBox = document.createElement('div');
-            messageBox.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background-color: rgba(0, 0, 0, 0.8);
-                color: white;
-                padding: 25px;
-                border-radius: 12px;
-                text-align: center;
-                z-index: 2000;
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-                max-width: 80vw;
-                font-size: 1.1em;
-                line-height: 1.5;
-            `;
-            messageBox.innerHTML = `
-                <p>${message}</p>
-                <button style="
-                    background-color: #3498db;
-                    color: white;
-                    padding: 10px 20px;
-                    border: none;
-                    border-radius: 8px;
-                    font-size: 1em;
-                    cursor: pointer;
-                    margin-top: 20px;
-                    transition: background-color 0.3s ease;
-                ">OK</button>
-            `;
-            document.body.appendChild(messageBox);
-
-            messageBox.querySelector('button').addEventListener('click', () => {
-                document.body.removeChild(messageBox);
-                if (onCloseCallback) {
-                    onCloseCallback();
-                }
-            });
-        }
-
-        // Initialize the welcome screen on page load
-        document.addEventListener('DOMContentLoaded', showWelcomeScreen);
+        // Hide loading screen once the page is fully loaded (useful if navigating back)
+        window.addEventListener('load', hideLoading);
     </script>
 </body>
 </html>
