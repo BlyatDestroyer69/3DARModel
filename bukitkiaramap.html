@@ -170,6 +170,15 @@
             }
         }
     </style>
+    <!-- Three.js and its addons for WebXR and 3D rendering -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+            }
+        }
+    </script>
 </head>
 <body>
     <div id="loading-screen" class="loading-screen hidden">
@@ -185,9 +194,10 @@
     </div>
 
     <script type="module">
-        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js';
-        import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/GLTFLoader.js'; // Changed to GLTFLoader
-        import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/controls/OrbitControls.js';
+        // Changed to use bare specifiers with importmap
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
         // --- DOM Elements ---
         const container = document.getElementById('container');
@@ -226,7 +236,7 @@
             showCustomMessage("Error loading 3D map model. Please try again later.", () => {});
         };
 
-        const gltfLoader = new GLTFLoader(manager); // Changed to GLTFLoader
+        const gltfLoader = new GLTFLoader(manager); // Using GLTFLoader
 
         // --- Utility Functions ---
         function showLoading() {
@@ -285,7 +295,7 @@
             mapScene.add(directionalLight);
 
             // Load the GLB map model
-            gltfLoader.load(MAP_MODEL_PATH, (gltf) => { // Changed fbxLoader to gltfLoader, and fbx to gltf
+            gltfLoader.load(MAP_MODEL_PATH, (gltf) => {
                 mapLoadedModel = gltf.scene; // GLTFLoader returns gltf object, scene is gltf.scene
                 mapScene.add(mapLoadedModel);
 
@@ -305,7 +315,7 @@
 
                 console.log("Map Model loaded and hotspots created.");
             }, undefined, (error) => {
-                console.error('Error loading Map GLB model:', error); // Changed error message
+                console.error('Error loading Map GLB model:', error);
                 showCustomMessage("Error loading 3D map model. Please try again later.", () => {});
             });
 
