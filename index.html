@@ -30,118 +30,159 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            text-align: center;
             z-index: 100;
-            transition: opacity 1s ease-in-out;
+            transition: opacity 0.5s ease-out;
+            opacity: 1; /* Initially visible */
         }
 
-        #welcome-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        #welcome-screen h1 {
-            font-size: 3em;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        #welcome-screen p {
-            font-size: 1.2em;
-            margin-bottom: 40px;
-            max-width: 600px;
-            line-height: 1.6;
-        }
-
-        #welcome-button {
-            background-color: #2ecc71;
-            color: white;
+        #start-button {
             padding: 15px 30px;
+            background-color: #28a745;
+            color: white;
             border: none;
             border-radius: 8px;
-            font-size: 1.5em;
+            font-size: 1.2em;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease;
         }
 
-        #welcome-button:hover {
-            background-color: #27ae60;
-            transform: translateY(-2px);
+        #start-button:hover {
+            background-color: #218838;
         }
 
-        /* AR Scene for Scanning */
-        a-scene {
+        /* AR Scanner Styles */
+        #ar-scanner-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            display: block;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 99; /* Below welcome screen initially */
             opacity: 0; /* Initially hidden */
-            transition: opacity 1s ease-in-out;
-        }
-
-        a-scene.active {
-            opacity: 1; /* Visible when active */
+            transition: opacity 0.5s ease-out;
+            pointer-events: none; /* Allows clicks to pass through when hidden */
         }
 
         #scan-message {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
             background-color: rgba(0, 0, 0, 0.7);
             color: white;
             padding: 10px 20px;
-            border-radius: 8px;
+            border-radius: 5px;
             font-size: 1.1em;
             text-align: center;
-            z-index: 50; /* Above AR scene */
-            display: none; /* Hidden until AR scene is active */
+            margin-top: 20px;
+        }
+
+        /* Message for Camera Permissions / Errors */
+        #camera-permission-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.2em;
+            z-index: 101; /* Above everything */
+            display: none; /* Hidden by default */
         }
     </style>
 </head>
 <body>
     <div id="welcome-screen">
-        <h1>Welcome to Bukit Kiara AR World!</h1>
-        <p>Scan the special map to unlock the interactive 3D experience.</p>
-        <button id="welcome-button">Start Scanning</button>
+        <h1>Welcome to Bukit Kiara AR World</h1>
+        <p>Experience the map in Augmented Reality.</p>
+        <button id="start-button">START AR EXPERIENCE</button>
     </div>
 
-    <a-scene
-        id="ar-scan-scene"
-        mindar-image="imageTargetSrc: ./assets/targets.mind; showImage: false;"
-        vr-mode-ui="enabled: false"
-        device-orientation-permission-ui="enabled: false"
-        visible="false"
-    >
-        <a-entity mindar-image-target="targetIndex: 0"></a-entity>
-        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-    </a-scene>
+    <div id="ar-scanner-overlay">
+        <div id="scan-message">Please scan the Bukit Kiara map.</div>
+        <a-scene
+            mindar-image="imageTargetSrc: assets/map_target.mind; autoStart: false; filterMinCF:0.0001; filterBeta: 0.0009;"
+            color-space="sRGB"
+            renderer="colorManagement: true, physicallyCorrectLights: true"
+            vr-mode-ui="enabled: false"
+            device-orientation-permission-ui="enabled: false"
+            embedded
+        >
+            <a-camera
+                mindar-image-auto-mr
+                position="0 0 0"
+                look-controls="enabled: false"
+            ></a-camera>
+        </a-scene>
+    </div>
 
-    <div id="scan-message">Please scan the Bukit Kiara map.</div>
+    <div id="camera-permission-message">
+        <p>Camera access is required for the AR experience.</p>
+        <p>Please allow camera permissions in your browser settings, or ensure your page is served over HTTPS.</p>
+        <button id="grant-camera-button">Retry Camera Access</button>
+    </div>
 
     <script>
         const welcomeScreen = document.getElementById('welcome-screen');
-        const welcomeButton = document.getElementById('welcome-button');
-        const arScanScene = document.getElementById('ar-scan-scene');
+        const startButton = document.getElementById('start-button');
+        const arScannerOverlay = document.getElementById('ar-scanner-overlay');
         const scanMessage = document.getElementById('scan-message');
-        let targetDetected = false; // Flag to prevent multiple redirects
+        const cameraPermissionMessage = document.getElementById('camera-permission-message');
+        const grantCameraButton = document.getElementById('grant-camera-button');
+        const arScene = document.querySelector('a-scene');
 
-        welcomeButton.addEventListener('click', () => {
-            welcomeScreen.classList.add('hidden');
-            welcomeScreen.addEventListener('transitionend', () => {
-                arScanScene.setAttribute('visible', 'true'); // Activate A-Frame scene
-                arScanScene.classList.add('active'); // Fade in A-Frame scene
-                scanMessage.style.display = 'block'; // Show scan message
-                console.log("AR Scanner Activated. Please scan the map target.");
-            }, { once: true });
-        });
+        let targetDetected = false;
 
-        document.addEventListener('DOMContentLoaded', () => {
+        // Function to start the AR experience
+        async function startARExperience() {
+            welcomeScreen.style.opacity = 0;
+            welcomeScreen.style.pointerEvents = 'none';
+
+            arScannerOverlay.style.opacity = 1;
+            arScannerOverlay.style.pointerEvents = 'auto';
+
+            try {
+                // Request camera permission before starting MindAR
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                // If successful, stop stream and proceed
+                stream.getTracks().forEach(track => track.stop());
+
+                // Initialize and start MindAR only after camera permission is granted
+                arScene.setAttribute('mindar-image', 'autoStart', true);
+
+                // Add event listener for when camera is ready (MindAR starts)
+                arScene.addEventListener('mindar-image-camera-ready', () => {
+                    console.log("MindAR camera ready. Start scanning for map target.");
+                    cameraPermissionMessage.style.display = 'none'; // Hide any permission errors
+                });
+
+                // Add event listener for camera error
+                arScene.addEventListener('mindar-image-camera-error', () => {
+                    console.error("MindAR camera error. Camera permission might be denied or device unsupported.");
+                    showCameraPermissionError();
+                });
+
+            } catch (err) {
+                console.error("Failed to get camera access:", err);
+                showCameraPermissionError();
+            }
+        }
+
+        function showCameraPermissionError() {
+            arScannerOverlay.style.opacity = 0;
+            arScannerOverlay.style.pointerEvents = 'none';
+            cameraPermissionMessage.style.display = 'block';
+        }
+
+        startButton.addEventListener('click', startARExperience);
+        grantCameraButton.addEventListener('click', startARExperience); // Retry button
+
+        // Event listener for MindAR target detection
+        arScene.addEventListener('loaded', () => {
             const mindarImageTargetEntity = document.querySelector('a-entity[mindar-image-target]');
-
             if (mindarImageTargetEntity) {
                 mindarImageTargetEntity.addEventListener('targetFound', () => {
                     if (!targetDetected) { // Only redirect on first detection
@@ -149,7 +190,7 @@
                         console.log("Map Target Found! Redirecting to 3D map viewer...");
                         scanMessage.textContent = "Map detected! Loading 3D experience...";
                         scanMessage.style.backgroundColor = 'rgba(46, 204, 113, 0.8)'; // Green background
-                        
+
                         // Redirect after a short delay to show the message
                         setTimeout(() => {
                             window.location.href = 'bukitkiaramap.html';
