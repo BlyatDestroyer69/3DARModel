@@ -69,7 +69,16 @@
             100% { transform: rotate(360deg); }
         }
     </style>
-</head>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/"
+        }
+      }
+    </script>
+    </head>
 <body>
     <div id="container"></div>
     <div id="loading-message">
@@ -80,10 +89,11 @@
     <script type="module">
         // *******************************************************************
         // CORRECT ES Module Imports for Three.js, OrbitControls, and GLTFLoader
+        // (These now rely on the <script type="importmap"> above)
         // *******************************************************************
-        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
-        import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/controls/OrbitControls.js';
-        import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/loaders/GLTFLoader.js';
+        import * as THREE from 'three'; // Now this will be resolved by the importmap
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js'; // Use 'three/addons/' for extensions
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'; // Use 'three/addons/' for extensions
         // *******************************************************************
 
         // Scene setup
