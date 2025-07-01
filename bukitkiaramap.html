@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Bukit Kiara 3D Map - Three.js</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
@@ -45,9 +46,8 @@
 
     <script type="module">
         import * as THREE from 'https://unpkg.com/three@0.126.1/build/three.module.js';
-        // Import FBXLoader instead of GLTFLoader
-        import { FBXLoader } from 'https://unpkg.com/three@0.126.1/examples/jsm/loaders/FBXLoader.js';
         import { OrbitControls } from 'https://unpkg.com/three@0.126.1/examples/jsm/controls/OrbitControls.js';
+        import { FBXLoader } from 'https://unpkg.com/three@0.126.1/examples/jsm/loaders/FBXLoader.js'; // FBX Loader
 
         const container = document.getElementById('container');
 
@@ -56,25 +56,55 @@
         scene.background = new THREE.Color(0xe0e0e0);
 
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 5, 10);
+        camera.position.set(0, 5, 10); // Adjust camera position as needed for your model size
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio); // Improve rendering quality on high-res screens
+        renderer.outputEncoding = THREE.sRGBEncoding; // Correct color output
+        renderer.toneMapping = THREE.ACESFilmicToneMapping; // Optional: for cinematic look
+        renderer.toneMappingExposure = 1.25; // Optional: Adjust exposure
+        // To address the .useLegacyLights deprecation warning:
+        // In newer Three.js versions (r155+), useLegacyLights is removed.
+        // Ensure you use physically correct lights (which DirectionalLight and AmbientLight are by default)
+        // and adjust outputEncoding/toneMapping for a proper PBR workflow.
+        // If you are on an older Three.js version that still has useLegacyLights,
+        // setting it to false explicitly is good practice:
+        // renderer.useLegacyLights = false; // Uncomment if your Three.js version is older than r155
+
         container.appendChild(renderer.domElement);
 
         // Controls
         const controls = new OrbitControls(camera, renderer.domElement);
-        controls.target.set(0, 1, 0);
+        controls.target.set(0, 1, 0); // Point controls to center of expected model
+        controls.enableDamping = true; // For smoother controls
+        controls.dampingFactor = 0.05;
         controls.update();
 
         // Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); // Softer ambient light
         scene.add(ambientLight);
 
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8); // Stronger directional light
         directionalLight.position.set(5, 10, 7.5);
-        directionalLight.castShadow = true;
+        directionalLight.castShadow = true; // Enable shadows if your model supports it and renderer has shadowMap enabled
+        // Set up shadow properties for the light
+        directionalLight.shadow.mapSize.width = 1024;
+        directionalLight.shadow.mapSize.height = 1024;
+        directionalLight.shadow.camera.near = 0.5;
+        directionalLight.shadow.camera.far = 50;
+        directionalLight.shadow.camera.left = -10;
+        directionalLight.shadow.camera.right = 10;
+        directionalLight.shadow.camera.top = 10;
+        directionalLight.shadow.camera.bottom = -10;
         scene.add(directionalLight);
+
+        // Optional: Add a helper to visualize the light and its shadow camera
+        // const helper = new THREE.DirectionalLightHelper( directionalLight, 5 );
+        // scene.add( helper );
+        // const shadowCameraHelper = new THREE.CameraHelper( directionalLight.shadow.camera );
+        // scene.add( shadowCameraHelper );
+
 
         // Raycaster for interaction
         const raycaster = new THREE.Raycaster();
@@ -84,36 +114,93 @@
         const hotspots = [];
 
         // Load FBX model
-        // Use FBXLoader instead of GLTFLoader
         const loader = new FBXLoader();
-        loader.load('/models/BukitKiara.fbx', function(fbx) { // Changed path and variable name
-            const model = fbx; // FBXLoader directly returns the Object3D
-            scene.add(model);
+        loader.load(
+            '/models/BukitKiara.fbx', // Path to your FBX model
+            function(fbx) {
+                const model = fbx;
+                scene.add(model);
 
-            // Traverse model to find checkpoint nodes with targetUrl property
-            // Note: FBX models might not carry userData in the same way as GLTF.
-            // You might need to adjust how targetUrl is stored/accessed for FBX models.
-            model.traverse(function(node) {
-                if (node.userData && node.userData.targetUrl) {
-                    createHotspot(node);
-                }
-            });
-        }, undefined, function(error) {
-            console.error('Error loading FBX model:', error); // Updated error message
-        });
+                // Adjust model scale or position if it appears too small, too large, or off-center
+                // Example: model.scale.set(0.01, 0.01, 0.01);
+                // Example: model.position.set(0, 0, 0);
+                // You might need to inspect the model's dimensions and adjust accordingly.
+
+                // Hotspot data handling for FBX:
+                // FBX models might not carry custom userData in the same way as GLTF.
+                // If your hotspots depend on userData from specific nodes in the FBX,
+                // you might need to manually identify those nodes by name/ID
+                // and assign their targetUrl and description after loading.
+                // Example:
+                // model.traverse(function(node) {
+                //     if (node.isMesh && node.name === 'Checkpoint_A') { // Or some other identifier
+                //         node.userData.targetUrl = 'checkpoint_1.html';
+                //         node.userData.description = 'Visit Checkpoint 1';
+                //         createHotspot(node);
+                //     }
+                // });
+
+                // Original logic (might work if userData is preserved by your FBX export process):
+                model.traverse(function(node) {
+                    if (node.userData && node.userData.targetUrl) {
+                        createHotspot(node);
+                    }
+                });
+
+                console.log('FBX model loaded successfully:', model);
+                // Optional: Fit camera to model after loading for best view
+                // const box = new THREE.Box3().setFromObject(model);
+                // const center = box.getCenter(new THREE.Vector3());
+                // const size = box.getSize(new THREE.Vector3());
+                // const maxDim = Math.max(size.x, size.y, size.z);
+                // const fov = camera.fov * (Math.PI / 180);
+                // let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+                // cameraZ *= 1.5; // Add some padding
+                // camera.position.set(center.x, center.y + maxDim / 2, center.z + cameraZ);
+                // controls.target.set(center.x, center.y, center.z);
+                // controls.update();
+
+            },
+            function(xhr) {
+                // Progress callback
+                console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+            },
+            function(error) {
+                console.error('Error loading FBX model:', error);
+                // Display user-friendly error message
+                const errorDiv = document.createElement('div');
+                errorDiv.style.position = 'absolute';
+                errorDiv.style.top = '50%';
+                errorDiv.style.left = '50%';
+                errorDiv.style.transform = 'translate(-50%, -50%)';
+                errorDiv.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
+                errorDiv.style.color = 'white';
+                errorDiv.style.padding = '20px';
+                errorDiv.style.borderRadius = '10px';
+                errorDiv.style.textAlign = 'center';
+                errorDiv.textContent = 'Failed to load 3D map. Please ensure the model file is accessible (404 error) and try again.';
+                container.appendChild(errorDiv);
+            }
+        );
 
         // Create hotspot label and store reference
         function createHotspot(node) {
             const label = document.createElement('div');
             label.className = 'hotspot-label';
-            label.textContent = node.name || 'Checkpoint';
-            label.title = node.userData.description || '';
+            label.textContent = node.name || 'Checkpoint'; // Use node.name as default label
+            label.title = node.userData.description || 'Visit this checkpoint'; // Use userData for description
             label.style.position = 'absolute';
             label.style.pointerEvents = 'auto';
             label.style.cursor = 'pointer';
 
             label.addEventListener('click', () => {
-                window.location.href = node.userData.targetUrl;
+                // Ensure targetUrl exists before redirecting
+                if (node.userData.targetUrl) {
+                    window.location.href = node.userData.targetUrl;
+                } else {
+                    console.warn(`Hotspot for ${node.name} has no targetUrl defined.`);
+                    alert(`Hotspot: ${node.name}\nNo destination specified.`);
+                }
             });
 
             container.appendChild(label);
@@ -125,16 +212,22 @@
         function updateHotspots() {
             hotspots.forEach(({ node, label }) => {
                 const pos = new THREE.Vector3();
+                // Ensure the node is part of the scene graph and has a valid position
+                if (!node.parent) {
+                    label.style.display = 'none'; // Hide if node is no longer in scene
+                    return;
+                }
                 node.getWorldPosition(pos);
                 pos.project(camera);
 
+                // Convert normalized device coordinates (-1 to +1) to screen coordinates
                 const x = (pos.x * 0.5 + 0.5) * window.innerWidth;
                 const y = (-pos.y * 0.5 + 0.5) * window.innerHeight;
 
                 label.style.transform = `translate(-50%, -100%) translate(${x}px,${y}px)`;
 
-                // Hide label if behind camera
-                const isVisible = pos.z < 1;
+                // Hide label if behind camera or too far away (optional)
+                const isVisible = pos.z < 1 && pos.z > -1; // pos.z is depth from -1 (near) to 1 (far)
                 label.style.display = isVisible ? 'block' : 'none';
             });
         }
@@ -144,19 +237,17 @@
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            updateHotspots(); // Update hotspot positions on resize
         });
 
         // Animate loop
         function animate() {
             requestAnimationFrame(animate);
-            controls.update();
+            controls.update(); // Only call controls.update if controls.enableDamping is true
             updateHotspots();
             renderer.render(scene, camera);
         }
         animate();
-
-        // Optional: handle mouse clicks on 3D objects (if needed)
-        // Currently hotspots are DOM elements for easier interaction
     </script>
 </body>
 </html>
