@@ -4,11 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Bukit Kiara 3D Map - Three.js</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
             overflow: hidden;
             font-family: 'Inter', sans-serif;
+            background-color: #f0f0f0; /* Consistent background */
         }
         #container {
             width: 100vw;
@@ -21,161 +23,169 @@
         }
         .hotspot-label {
             position: absolute;
-            background-color: #3498db;
+            background-color: rgba(52, 152, 219, 0.9); /* More opaque blue */
             color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 14px;
+            padding: 6px 12px; /* Slightly larger padding */
+            border-radius: 6px; /* Slightly more rounded corners */
+            font-size: 15px; /* Slightly larger font */
+            font-weight: 600; /* Bolder text */
             pointer-events: auto;
             cursor: pointer;
             user-select: none;
             white-space: nowrap;
             transform: translate(-50%, -100%);
-            opacity: 0.8;
-            transition: opacity 0.3s ease;
+            opacity: 0.9; /* Slightly less transparent by default */
+            transition: opacity 0.3s ease, background-color 0.3s ease, transform 0.2s ease;
             z-index: 10;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
         }
         .hotspot-label:hover {
             opacity: 1;
+            background-color: #2980b9; /* Darker blue on hover */
+            transform: translate(-50%, -100%) translateY(-2px); /* Lift slightly on hover */
         }
-        #loading-message {
+
+        /* Loading message style */
+        #loading-screen {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.7);
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
             color: white;
-            padding: 15px 25px;
-            border-radius: 8px;
-            font-size: 1.2em;
-            z-index: 20;
             display: flex;
+            justify-content: center;
             align-items: center;
-            gap: 10px;
+            font-size: 1.5em;
+            z-index: 1000;
+            flex-direction: column;
+            gap: 15px;
         }
-        #loading-message.error {
-            background-color: rgba(255, 0, 0, 0.8);
-        }
+
         .spinner {
             border: 4px solid rgba(255, 255, 255, 0.3);
             border-top: 4px solid #fff;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
+            width: 40px;
+            height: 40px;
             animation: spin 1s linear infinite;
         }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-    </style>
 
-    <script type="importmap">
-      {
-        "imports": {
-          "three": "https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js",
-          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/"
-        }
-      }
-    </script>
-    </head>
+    </style>
+</head>
 <body>
     <div id="container"></div>
-    <div id="loading-message">
+
+    <div id="loading-screen">
         <div class="spinner"></div>
-        <span>Loading 3D map...</span>
+        <p>Loading 3D Map...</p>
     </div>
 
     <script type="module">
-        // *******************************************************************
-        // CORRECT ES Module Imports for Three.js, OrbitControls, and GLTFLoader
-        // (These now rely on the <script type="importmap"> above)
-        // *******************************************************************
-        import * as THREE from 'three'; // This will be resolved by the importmap
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js'; // Use 'three/addons/' for extensions
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'; // Use 'three/addons/' for extensions
-        // *******************************************************************
+        import * as THREE from 'https://unpkg.com/three@0.126.1/build/three.module.js';
+        import { GLTFLoader } from 'https://unpkg.com/three@0.126.1/examples/jsm/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'https://unpkg.com/three@0.126.1/examples/jsm/controls/OrbitControls.js';
 
-        // Scene setup
+        const container = document.getElementById('container');
+        const loadingScreen = document.getElementById('loading-screen');
+
+        // Scene, Camera, Renderer
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        scene.background = new THREE.Color(0xe0e0e0); // Light grey background
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 5, 10); // Initial camera position
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById('container').appendChild(renderer.domElement);
+        container.appendChild(renderer.domElement);
 
-        // Lights
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8); // Soft white light
+        // Controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.target.set(0, 1, 0); // Point camera at the center of the scene
+        controls.enableDamping = true; // Enable smooth damping
+        controls.dampingFactor = 0.05;
+        controls.screenSpacePanning = false; // Prevents panning beyond limits
+        controls.minDistance = 2; // Minimum zoom
+        controls.maxDistance = 20; // Maximum zoom
+        controls.maxPolarAngle = Math.PI / 2 - 0.1; // Restrict orbit to prevent going below the ground
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7); // Soft ambient light
         scene.add(ambientLight);
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-        directionalLight.position.set(5, 10, 7.5).normalize();
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8); // Brighter directional light
+        directionalLight.position.set(5, 10, 7);
+        directionalLight.castShadow = true; // Enable shadows for more realism (if your model supports it)
         scene.add(directionalLight);
 
-        // Camera controls
-        const controls = new OrbitControls(camera, renderer.domElement);
-        camera.position.set(0, 5, 10); // Adjust initial camera position
-        controls.update();
-
-        const loadingMessage = document.getElementById('loading-message');
-
-        // Hotspots array (to store 3D nodes and their corresponding HTML labels)
+        // Hotspots Array
         const hotspots = [];
 
-        // ***** MODEL LOADING - GLTFLoader for GLB *****
-        const loader = new GLTFLoader(); // Use GLTFLoader for GLB files
+        // Example Hotspot Data
+        // IMPORTANT: Adjust 'position' values based on your actual 3D map model's coordinates
+        // and create checkpoint_X.html files for each.
+        const hotspotData = [
+            { id: 1, name: "Checkpoint 1: Flower Garden", position: { x: -1.5, y: 0.5, z: 2.5 }, url: "checkpoint_1.html" },
+            { id: 2, name: "Checkpoint 2: Bird Sanctuary", position: { x: 3, y: 0.8, z: -1.0 }, url: "checkpoint_2.html" },
+            { id: 3, name: "Checkpoint 3: Lake View", position: { x: -3.5, y: 0.2, z: -2.0 }, url: "checkpoint_3.html" },
+            { id: 4, name: "Checkpoint 4: Trail Head", position: { x: 1.0, y: 0.4, z: 3.5 }, url: "checkpoint_4.html" },
+            { id: 5, name: "Checkpoint 5: Observation Deck", position: { x: 0.5, y: 1.2, z: -4.0 }, url: "checkpoint_5.html" }
+        ];
+
+        // Load GLTF Model
+        const loader = new GLTFLoader();
         loader.load(
-            'models/bukit_kiara_map.glb', // Path to your GLB model, relative to this HTML file
-            function(gltf) { // GLTF loader returns a GLTF object
-                const model = gltf.scene; // The actual 3D model is in gltf.scene
-                scene.add(model);
+            'models/bukit_kiara_map.glb', // Path to your 3D map model
+            function (gltf) {
+                scene.add(gltf.scene);
+                loadingScreen.style.display = 'none'; // Hide loading screen once model is loaded
 
-                // Adjust model scale and position if necessary
-                // model.scale.set(0.1, 0.1, 0.1);
-                // model.position.set(0, 0, 0);
+                // After model is loaded, add hotspots
+                hotspotData.forEach(data => {
+                    // Using a tiny, invisible sphere for precise position and potential raycasting
+                    const geometry = new THREE.SphereGeometry(0.05, 16, 16);
+                    const material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0 });
+                    const hotspotNode = new THREE.Mesh(geometry, material);
+                    hotspotNode.position.set(data.position.x, data.position.y, data.position.z);
+                    hotspotNode.userData.id = data.id; // Store data on the object
+                    hotspotNode.userData.name = data.name;
+                    hotspotNode.userData.url = data.url;
+                    scene.add(hotspotNode);
 
-                // Add example hotspots (replace with your actual 3D coordinates and data)
-                // You'll need to inspect your GLB model's hierarchy to find these node names
-                // For example:
-                // findNodeAndAddHotspot(model, 'Checkpoint1_Node', 'Checkpoint 1: Trail Head');
-                // findNodeAndAddHotspot(model, 'Waterfall_Area', 'Waterfall Viewpoint');
-
-                // Hide loading message on success
-                loadingMessage.style.display = 'none';
+                    addHotspotLabel(hotspotNode, data.name);
+                });
             },
-            function(xhr) {
-                // Update loading progress
-                const progress = (xhr.loaded / xhr.total * 100);
-                loadingMessage.querySelector('span').textContent = `Loading 3D map... ${progress.toFixed(0)}%`;
-                console.log(progress + '% loaded');
+            // Optional: A function to be called while loading is in progress
+            function (xhr) {
+                const percentLoaded = Math.round(xhr.loaded / xhr.total * 100);
+                loadingScreen.querySelector('p').textContent = `Loading 3D Map... ${percentLoaded}%`;
             },
-            function(error) {
-                console.error('Error loading GLB model:', error);
-                loadingMessage.classList.add('error');
-                loadingMessage.innerHTML = 'ERROR: Model not found or failed to load. Check console for details. Path: `models/bukit_kiara_map.glb`';
-                loadingMessage.querySelector('.spinner')?.remove(); // Remove spinner on error
+            // Called when loading has errors
+            function (error) {
+                console.error('Error loading GLTF model:', error);
+                loadingScreen.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
+                loadingScreen.querySelector('.spinner').style.display = 'none';
+                loadingScreen.querySelector('p').textContent = 'Error loading map. Please try again later.';
             }
         );
 
-        // Function to find a node by name and add a hotspot
-        function findNodeAndAddHotspot(parent, nodeName, labelText) {
-            const node = parent.getObjectByName(nodeName);
-            if (node) {
-                addHotspot(node, labelText);
-            } else {
-                console.warn(`Node '${nodeName}' not found in the model hierarchy. Cannot add hotspot.`);
-            }
-        }
-
-        // Function to create and add an HTML hotspot label
-        function addHotspot(node, text) {
-            const container = document.getElementById('container');
+        // Function to add HTML label for hotspot
+        function addHotspotLabel(node, text) {
             const label = document.createElement('div');
             label.className = 'hotspot-label';
             label.textContent = text;
-            label.onclick = () => {
-                // Redirect to checkpoint page on click
-                window.location.href = 'checkpoint_1.html'; // Adjust this URL for specific checkpoints
-            };
             container.appendChild(label);
+
+            // Add click listener to the label to navigate
+            label.addEventListener('click', () => {
+                if (node.userData.url) {
+                    window.location.href = node.userData.url;
+                }
+            });
 
             hotspots.push({ node, label });
         }
@@ -183,17 +193,23 @@
         // Update hotspot label positions on render
         function updateHotspots() {
             hotspots.forEach(({ node, label }) => {
-                const pos = new THREE.Vector3();
-                node.getWorldPosition(pos);
-                pos.project(camera);
+                // Get the 3D position of the hotspot node in world coordinates
+                const vector = new THREE.Vector3();
+                node.getWorldPosition(vector);
 
-                const x = (pos.x * 0.5 + 0.5) * window.innerWidth;
-                const y = (-pos.y * 0.5 + 0.5) * window.innerHeight;
+                // Project the 3D position to 2D screen coordinates
+                vector.project(camera);
 
+                // Calculate screen position in pixels
+                const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+                const y = (-vector.y * 0.5 + 0.5) * window.innerHeight;
+
+                // Apply the calculated position to the HTML label
                 label.style.transform = `translate(-50%, -100%) translate(${x}px,${y}px)`;
 
-                // Hide label if behind camera
-                const isVisible = pos.z > -1 && pos.z < 1; // Check if within camera's frustum
+                // Determine if the hotspot is visible (in front of the camera)
+                // If z is greater than 1, it's behind the camera.
+                const isVisible = vector.z < 1;
                 label.style.display = isVisible ? 'block' : 'none';
             });
         }
@@ -203,16 +219,17 @@
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            controls.update(); // Update controls on resize
         });
 
         // Animate loop
         function animate() {
             requestAnimationFrame(animate);
-            controls.update();
-            updateHotspots();
+            controls.update(); // Update controls for damping and rotation
+            updateHotspots(); // Update hotspot positions
             renderer.render(scene, camera);
         }
-        animate();
+        animate(); // Start the animation loop
     </script>
 </body>
 </html>
