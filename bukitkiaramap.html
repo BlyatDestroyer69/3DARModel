@@ -78,10 +78,13 @@
     </div>
 
     <script type="module">
-        // Import everything as ES Modules
+        // *******************************************************************
+        // CORRECT ES Module Imports for Three.js, OrbitControls, and GLTFLoader
+        // *******************************************************************
         import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
         import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/controls/OrbitControls.js';
         import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/loaders/GLTFLoader.js';
+        // *******************************************************************
 
         // Scene setup
         const scene = new THREE.Scene();
@@ -107,10 +110,10 @@
         // Hotspots array (to store 3D nodes and their corresponding HTML labels)
         const hotspots = [];
 
-        // ***** MODEL LOADING - NOW USING GLTFLoader for GLB *****
+        // ***** MODEL LOADING - GLTFLoader for GLB *****
         const loader = new GLTFLoader(); // Use GLTFLoader for GLB files
         loader.load(
-            'models/bukit_kiara_map.glb', // <--- CHECK THIS PATH CAREFULLY! NO LEADING SLASH!
+            'models/bukit_kiara_map.glb', // Path to your GLB model, relative to this HTML file
             function(gltf) { // GLTF loader returns a GLTF object
                 const model = gltf.scene; // The actual 3D model is in gltf.scene
                 scene.add(model);
@@ -120,8 +123,7 @@
                 // model.position.set(0, 0, 0);
 
                 // Add example hotspots (replace with your actual 3D coordinates and data)
-                // Assuming your model has children with specific names
-                // You'll need to inspect your GLB model's hierarchy to find these node names.
+                // You'll need to inspect your GLB model's hierarchy to find these node names
                 // For example:
                 // findNodeAndAddHotspot(model, 'Checkpoint1_Node', 'Checkpoint 1: Trail Head');
                 // findNodeAndAddHotspot(model, 'Waterfall_Area', 'Waterfall Viewpoint');
