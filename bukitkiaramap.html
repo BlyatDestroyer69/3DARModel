@@ -91,7 +91,7 @@
         // CORRECT ES Module Imports for Three.js, OrbitControls, and GLTFLoader
         // (These now rely on the <script type="importmap"> above)
         // *******************************************************************
-        import * as THREE from 'three'; // Now this will be resolved by the importmap
+        import * as THREE from 'three'; // This will be resolved by the importmap
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js'; // Use 'three/addons/' for extensions
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'; // Use 'three/addons/' for extensions
         // *******************************************************************
@@ -193,8 +193,6 @@
                 label.style.transform = `translate(-50%, -100%) translate(${x}px,${y}px)`;
 
                 // Hide label if behind camera
-                // A simple check might not be enough for complex scenes/hotspots
-                // You might need raycasting for occlusion
                 const isVisible = pos.z > -1 && pos.z < 1; // Check if within camera's frustum
                 label.style.display = isVisible ? 'block' : 'none';
             });
