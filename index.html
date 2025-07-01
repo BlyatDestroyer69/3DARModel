@@ -30,196 +30,301 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 100;
+            text-align: center;
+            z-index: 100; /* Ensure it's on top */
             transition: opacity 0.5s ease-out;
-            opacity: 1; /* Initially visible */
+            gap: 20px; /* Space between elements */
+            padding: 20px; /* Padding for small screens */
+            box-sizing: border-box; /* Include padding in element's total width and height */
+        }
+
+        #welcome-screen h1 {
+            font-size: 3.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        #welcome-screen p {
+            font-size: 1.4em;
+            max-width: 600px;
+            line-height: 1.6;
+            margin-bottom: 30px;
         }
 
         #start-button {
-            padding: 15px 30px;
-            background-color: #28a745;
+            background-color: #2ecc71; /* Green */
             color: white;
+            padding: 15px 30px;
             border: none;
             border-radius: 8px;
             font-size: 1.2em;
+            font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
 
         #start-button:hover {
-            background-color: #218838;
+            background-color: #27ae60; /* Darker green on hover */
+            transform: translateY(-2px);
         }
 
-        /* AR Scanner Styles */
-        #ar-scanner-overlay {
+        /* Hidden class for fading out welcome screen */
+        .hidden {
+            opacity: 0;
+            pointer-events: none; /* Make it non-interactive when hidden */
+        }
+
+        /* AR Experience Styles */
+        #ar-experience {
             position: absolute;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            display: flex;
+            display: none; /* Hidden by default */
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 99; /* Below welcome screen initially */
-            opacity: 0; /* Initially hidden */
-            transition: opacity 0.5s ease-out;
-            pointer-events: none; /* Allows clicks to pass through when hidden */
+            z-index: 50; /* Below welcome screen but above general content */
         }
 
+        /* MindAR A-Frame scene takes up the full space */
+        a-scene {
+            width: 100%;
+            height: 100%;
+            display: block; /* Ensure it behaves like a block element */
+        }
+
+        /* Scanning Message Overlay */
         #scan-message {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             background-color: rgba(0, 0, 0, 0.7);
             color: white;
             padding: 10px 20px;
-            border-radius: 5px;
+            border-radius: 8px;
             font-size: 1.1em;
             text-align: center;
-            margin-top: 20px;
+            z-index: 100; /* Ensure it's above the AR scene */
         }
 
-        /* Message for Camera Permissions / Errors */
+        /* Camera Permission Message Overlay */
         #camera-permission-message {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: rgba(255, 0, 0, 0.8);
+            background-color: rgba(220, 53, 69, 0.9); /* Reddish background */
             color: white;
-            padding: 20px;
-            border-radius: 10px;
+            padding: 25px;
+            border-radius: 12px;
             text-align: center;
-            font-size: 1.2em;
-            z-index: 101; /* Above everything */
+            z-index: 150; /* On top of everything */
             display: none; /* Hidden by default */
+            max-width: 80%;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        #camera-permission-message p {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+
+        #grant-camera-button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+
+        #grant-camera-button:hover {
+            background-color: #0056b3;
+        }
+
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            #welcome-screen h1 {
+                font-size: 2.5em;
+            }
+            #welcome-screen p {
+                font-size: 1.1em;
+            }
+            #start-button {
+                padding: 12px 25px;
+                font-size: 1em;
+            }
+            #scan-message {
+                font-size: 0.9em;
+                padding: 8px 15px;
+            }
+            #camera-permission-message {
+                padding: 15px;
+            }
+            #camera-permission-message p {
+                font-size: 1em;
+            }
         }
     </style>
 </head>
 <body>
     <div id="welcome-screen">
         <h1>Welcome to Bukit Kiara AR World</h1>
-        <p>Experience the map in Augmented Reality.</p>
-        <button id="start-button">START AR EXPERIENCE</button>
+        <p>Explore the beauty of Bukit Kiara through an immersive Augmented Reality experience. Scan the designated map to begin your adventure!</p>
+        <button id="start-button">Start AR Experience</button>
     </div>
 
-    <div id="ar-scanner-overlay">
-        <div id="scan-message">Please scan the Bukit Kiara map.</div>
+    <div id="ar-experience">
         <a-scene
-            mindar-image="imageTargetSrc: assets/map_target.mind; autoStart: false; filterMinCF:0.0001; filterBeta: 0.0009;"
-            color-space="sRGB"
-            renderer="colorManagement: true, physicallyCorrectLights: true"
+            mindar-image="imageTargetSrc: assets/targets.mind; autoStart: false; filterMinCF:0.0001; filterBeta: 0.001;"
             vr-mode-ui="enabled: false"
             device-orientation-permission-ui="enabled: false"
-            embedded
+            renderer="antialias: true, physicallyCorrectLights: true, colorManagement: true"
         >
-            <a-camera
-                mindar-image-auto-mr
-                position="0 0 0"
-                look-controls="enabled: false"
-            ></a-camera>
+            <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-            <a-entity mindar-image-target="targetIndex: 0;">
+            <a-entity mindar-image-target="targetIndex: 0">
                 </a-entity>
         </a-scene>
+
+        <div id="scan-message">Please grant camera access and scan the Bukit Kiara map.</div>
     </div>
 
     <div id="camera-permission-message">
-        <p>Camera access is required for the AR experience.</p>
-        <p>Please allow camera permissions in your browser settings, or ensure your page is served over HTTPS.</p>
-        <button id="grant-camera-button">Retry Camera Access</button>
-    </div>
+        <p>This experience requires camera access. Please ensure your browser has camera permission and reload the page, or click 'Grant Access' if prompted.</p>
+        <button id="grant-camera-button" style="display:none;">Grant Access</button>
+        </div>
+
 
     <script>
-        const welcomeScreen = document.getElementById('welcome-screen');
-        const startButton = document.getElementById('start-button');
-        const arScannerOverlay = document.getElementById('ar-scanner-overlay');
-        const scanMessage = document.getElementById('scan-message');
-        const cameraPermissionMessage = document.getElementById('camera-permission-message');
-        const grantCameraButton = document.getElementById('grant-camera-button');
-        const arScene = document.querySelector('a-scene');
+        document.addEventListener('DOMContentLoaded', () => {
+            const welcomeScreen = document.getElementById('welcome-screen');
+            const startButton = document.getElementById('start-button');
+            const arExperience = document.getElementById('ar-experience');
+            const scanMessage = document.getElementById('scan-message');
+            const cameraPermissionMessage = document.getElementById('camera-permission-message');
+            const grantCameraButton = document.getElementById('grant-camera-button'); // This button might not always be needed if browser handles it.
 
-        let targetDetected = false;
+            let targetDetected = false;
+            let arSceneInitialized = false;
 
-        // Function to start the AR experience
-        async function startARExperience() {
-            welcomeScreen.style.opacity = 0;
-            welcomeScreen.style.pointerEvents = 'none';
+            // Function to request camera permission and start AR
+            async function startARExperience() {
+                welcomeScreen.classList.add('hidden'); // Fade out welcome screen
+                setTimeout(() => { welcomeScreen.style.display = 'none'; }, 500); // Hide after transition
 
-            arScannerOverlay.style.opacity = 1;
-            arScannerOverlay.style.pointerEvents = 'auto';
+                arExperience.style.display = 'flex'; // Show AR experience container
+                scanMessage.textContent = "Starting camera...";
+                scanMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                cameraPermissionMessage.style.display = 'none'; // Hide any previous permission messages
 
-            try {
-                // Request camera permission before starting MindAR
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                // If successful, stop stream and proceed
-                stream.getTracks().forEach(track => track.stop());
+                try {
+                    // Request camera permission directly
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    stream.getTracks().forEach(track => track.stop()); // Stop the stream immediately, just checking access
 
-                // Initialize and start MindAR only after camera permission is likely granted
-                // Use a short timeout to ensure A-Frame/MindAR components are fully initialized
-                // and the target entity is available in the DOM.
-                setTimeout(() => {
-                    arScene.setAttribute('mindar-image', 'autoStart', true);
-                    console.log("Attempting to start MindAR camera and target detection.");
-                }, 100); // Small delay
+                    if (!arSceneInitialized) {
+                        // Initialize MindAR A-Frame scene only once camera permission is confirmed
+                        const arScene = document.querySelector('a-scene');
+                        const mindarImageTargetEntity = document.querySelector('a-entity[mindar-image-target]');
 
-                // Add event listener for when camera is ready (MindAR starts)
-                arScene.addEventListener('mindar-image-camera-ready', () => {
-                    console.log("MindAR camera ready. Start scanning for map target.");
-                    cameraPermissionMessage.style.display = 'none'; // Hide any permission errors
-                });
+                        if (!arScene) {
+                            console.error("A-Frame scene not found!");
+                            scanMessage.textContent = "Error: AR system not found.";
+                            scanMessage.style.backgroundColor = 'rgba(255, 99, 71, 0.8)';
+                            return;
+                        }
 
-                // Add event listener for camera error
-                arScene.addEventListener('mindar-image-camera-error', () => {
-                    console.error("MindAR camera error. Camera permission might be denied or device unsupported.");
-                    showCameraPermissionError();
-                });
-
-            } catch (err) {
-                console.error("Failed to get camera access:", err);
-                showCameraPermissionError();
-            }
-        }
-
-        function showCameraPermissionError() {
-            arScannerOverlay.style.opacity = 0;
-            arScannerOverlay.style.pointerEvents = 'none';
-            cameraPermissionMessage.style.display = 'block';
-        }
-
-        startButton.addEventListener('click', startARExperience);
-        grantCameraButton.addEventListener('click', startARExperience); // Retry button
-
-        // Event listener for MindAR target detection
-        arScene.addEventListener('loaded', () => {
-            // Now, we are sure the mindar-image-target entity exists within the scene
-            // as we explicitly added it in the HTML.
-            const mindarImageTargetEntity = document.querySelector('a-entity[mindar-image-target]');
-            // The console.error in the else block should no longer be hit if HTML is correct.
-            if (mindarImageTargetEntity) {
-                mindarImageTargetEntity.addEventListener('targetFound', () => {
-                    if (!targetDetected) { // Only redirect on first detection
-                        targetDetected = true;
-                        console.log("Map Target Found! Redirecting to 3D map viewer...");
-                        scanMessage.textContent = "Map detected! Loading 3D experience...";
-                        scanMessage.style.backgroundColor = 'rgba(46, 204, 113, 0.8)'; // Green background
-
-                        // Redirect after a short delay to show the message
-                        setTimeout(() => {
-                            window.location.href = 'bukitkiaramap.html';
-                        }, 1500); // 1.5 seconds delay
-                    }
-                });
-
-                mindarImageTargetEntity.addEventListener('targetLost', () => {
-                    // If target is lost before redirection, reset message
-                    if (!targetDetected) {
+                        // Start MindAR
+                        await arScene.setAttribute('mindar-image', {
+                            imageTargetSrc: 'assets/targets.mind',
+                            autoStart: true, // Auto-start the camera and AR
+                            filterMinCF: 0.0001,
+                            filterBeta: 0.001
+                        });
+                        arScene.play(); // Explicitly play the A-Frame scene
+                        arSceneInitialized = true;
+                        console.log("MindAR scene initialized and started.");
                         scanMessage.textContent = "Please scan the Bukit Kiara map.";
-                        scanMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'; // Back to black
+                        scanMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+
+                        // Add event listeners for target detection
+                        if (mindarImageTargetEntity) {
+                            mindarImageTargetEntity.addEventListener('targetFound', () => {
+                                if (!targetDetected) { // Only redirect on first detection
+                                    targetDetected = true;
+                                    console.log("Map Target Found! Redirecting to 3D map viewer...");
+                                    scanMessage.textContent = "Map detected! Loading 3D experience...";
+                                    scanMessage.style.backgroundColor = 'rgba(46, 204, 113, 0.8)'; // Green background
+
+                                    // Redirect after a short delay to show the message
+                                    setTimeout(() => {
+                                        window.location.href = 'bukitkiaramap.html';
+                                    }, 1500); // 1.5 seconds delay
+                                }
+                            });
+
+                            mindarImageTargetEntity.addEventListener('targetLost', () => {
+                                // If target is lost before redirection, reset message
+                                if (!targetDetected) {
+                                    scanMessage.textContent = "Please scan the Bukit Kiara map.";
+                                    scanMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'; // Back to black
+                                }
+                            });
+                        } else {
+                            console.error("MindAR image target entity not found. Is your A-Frame scene correctly structured?");
+                            scanMessage.textContent = "Error: AR target not found in scene.";
+                            scanMessage.style.backgroundColor = 'rgba(255, 99, 71, 0.8)';
+                        }
+                    } else {
+                        // If already initialized, just ensure it's running
+                        const arScene = document.querySelector('a-scene');
+                        arScene.play();
+                        scanMessage.textContent = "Please scan the Bukit Kiara map.";
+                        scanMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
                     }
-                });
-            } else {
-                // This block should ideally not be reached with the corrected HTML.
-                console.error("CRITICAL: MindAR image target entity still not found after scene loaded. Check HTML structure carefully.");
+
+                } catch (err) {
+                    console.error("Error accessing camera or starting AR:", err);
+                    if (err.name === 'NotAllowedError' || err.name === 'SecurityError') {
+                        // User denied camera access or not on HTTPS
+                        scanMessage.textContent = "Camera access denied. Please grant permission.";
+                        scanMessage.style.backgroundColor = 'rgba(231, 76, 60, 0.8)'; // Red background for error
+                        cameraPermissionMessage.style.display = 'block'; // Show the custom permission message
+                        grantCameraButton.style.display = 'none'; // Browser's built-in prompt is usually better.
+                    } else if (err.name === 'NotFoundError' || err.name === 'OverconstrainedError') {
+                         scanMessage.textContent = "No camera found or camera in use. Please ensure your camera is available.";
+                         scanMessage.style.backgroundColor = 'rgba(231, 76, 60, 0.8)';
+                    }
+                    else {
+                        scanMessage.textContent = "Failed to start AR. Device might not be supported.";
+                        scanMessage.style.backgroundColor = 'rgba(231, 76, 60, 0.8)';
+                        cameraPermissionMessage.style.display = 'block';
+                        cameraPermissionMessage.querySelector('p').textContent = "Failed to start AR experience. Your device or browser may not support Web AR. Please try a different device or browser (e.g., Chrome on Android/iOS).";
+                        grantCameraButton.style.display = 'none';
+                    }
+                    arExperience.style.display = 'none'; // Hide AR container if it fails
+                    welcomeScreen.style.display = 'flex'; // Show welcome screen again as fallback
+                    welcomeScreen.classList.remove('hidden');
+                }
             }
+
+            startButton.addEventListener('click', startARExperience);
+
+            // Grant camera button (might not always be active depending on browser behavior)
+            // This is primarily for demonstrating how you *could* re-trigger, but browser permissions are key.
+            grantCameraButton.addEventListener('click', () => {
+                // Hides the custom message and tries again.
+                // Note: Actual browser permission dialog might not reappear unless page is reloaded.
+                startARExperience();
+            });
         });
     </script>
 </body>
