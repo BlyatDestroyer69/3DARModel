@@ -116,6 +116,9 @@
                 position="0 0 0"
                 look-controls="enabled: false"
             ></a-camera>
+
+            <a-entity mindar-image-target="targetIndex: 0;">
+                </a-entity>
         </a-scene>
     </div>
 
@@ -150,8 +153,12 @@
                 // If successful, stop stream and proceed
                 stream.getTracks().forEach(track => track.stop());
 
-                // Initialize and start MindAR only after camera permission is granted
-                arScene.setAttribute('mindar-image', 'autoStart', true);
+                // Initialize and start MindAR only after camera permission is likely granted
+                // Use a short timeout to ensure A-Frame/MindAR components are fully initialized
+                setTimeout(() => {
+                    arScene.setAttribute('mindar-image', 'autoStart', true);
+                    console.log("Attempting to start MindAR camera and target detection.");
+                }, 100); // Small delay
 
                 // Add event listener for when camera is ready (MindAR starts)
                 arScene.addEventListener('mindar-image-camera-ready', () => {
@@ -182,7 +189,10 @@
 
         // Event listener for MindAR target detection
         arScene.addEventListener('loaded', () => {
+            // Now, we are sure the mindar-image-target entity exists within the scene
+            // as we explicitly added it in the HTML.
             const mindarImageTargetEntity = document.querySelector('a-entity[mindar-image-target]');
+            // The console.error in the else block should no longer be hit.
             if (mindarImageTargetEntity) {
                 mindarImageTargetEntity.addEventListener('targetFound', () => {
                     if (!targetDetected) { // Only redirect on first detection
@@ -206,7 +216,8 @@
                     }
                 });
             } else {
-                console.error("MindAR image target entity not found. Is your A-Frame scene correctly structured?");
+                // This block should ideally not be reached with the corrected HTML.
+                console.error("MindAR image target entity still not found after scene loaded. Critical issue.");
             }
         });
     </script>
