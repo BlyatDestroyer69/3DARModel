@@ -45,7 +45,8 @@
 
     <script type="module">
         import * as THREE from 'https://unpkg.com/three@0.126.1/build/three.module.js';
-        import { GLTFLoader } from 'https://unpkg.com/three@0.126.1/examples/jsm/loaders/GLTFLoader.js';
+        // Import FBXLoader instead of GLTFLoader
+        import { FBXLoader } from 'https://unpkg.com/three@0.126.1/examples/jsm/loaders/FBXLoader.js';
         import { OrbitControls } from 'https://unpkg.com/three@0.126.1/examples/jsm/controls/OrbitControls.js';
 
         const container = document.getElementById('container');
@@ -82,20 +83,23 @@
         // Store hotspots and their DOM labels
         const hotspots = [];
 
-        // Load GLB model
-       const loader = new GLTFLoader();
-        loader.load('/models/bukit_kiara_map.glb', function(gltf) {
-            const model = gltf.scene;
+        // Load FBX model
+        // Use FBXLoader instead of GLTFLoader
+        const loader = new FBXLoader();
+        loader.load('/models/BukitKiara.fbx', function(fbx) { // Changed path and variable name
+            const model = fbx; // FBXLoader directly returns the Object3D
             scene.add(model);
 
             // Traverse model to find checkpoint nodes with targetUrl property
+            // Note: FBX models might not carry userData in the same way as GLTF.
+            // You might need to adjust how targetUrl is stored/accessed for FBX models.
             model.traverse(function(node) {
                 if (node.userData && node.userData.targetUrl) {
                     createHotspot(node);
                 }
             });
         }, undefined, function(error) {
-            console.error('Error loading GLB model:', error);
+            console.error('Error loading FBX model:', error); // Updated error message
         });
 
         // Create hotspot label and store reference
