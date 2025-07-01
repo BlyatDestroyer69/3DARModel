@@ -186,7 +186,7 @@
 
     <script type="module">
         import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js';
-        import { FBXLoader } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/FBXLoader.js'; // Using FBXLoader
+        import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/loaders/GLTFLoader.js'; // Changed to GLTFLoader
         import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/controls/OrbitControls.js';
 
         // --- DOM Elements ---
@@ -203,7 +203,7 @@
 
         // --- Model Paths (Customize this) ---
         // IMPORTANT: Replace 'YOUR_HOSTED_MODEL_URL_HERE' with the actual URL from your hosting service.
-        const MAP_MODEL_PATH = 'YOUR_HOSTED_MODEL_URL_HERE/bukit_kiara_map.fbx'; // The map model for the 3D viewer
+        const MAP_MODEL_PATH = 'models/bukit_kiara_map.glb'; // The map model for the 3D viewer (now GLB)
 
         // --- Loading Manager ---
         const manager = new THREE.LoadingManager();
@@ -226,7 +226,7 @@
             showCustomMessage("Error loading 3D map model. Please try again later.", () => {});
         };
 
-        const fbxLoader = new FBXLoader(manager); // Using FBXLoader
+        const gltfLoader = new GLTFLoader(manager); // Changed to GLTFLoader
 
         // --- Utility Functions ---
         function showLoading() {
@@ -284,13 +284,13 @@
             directionalLight.castShadow = true;
             mapScene.add(directionalLight);
 
-            // Load the FBX map model
-            fbxLoader.load(MAP_MODEL_PATH, (fbx) => {
-                mapLoadedModel = fbx;
+            // Load the GLB map model
+            gltfLoader.load(MAP_MODEL_PATH, (gltf) => { // Changed fbxLoader to gltfLoader, and fbx to gltf
+                mapLoadedModel = gltf.scene; // GLTFLoader returns gltf object, scene is gltf.scene
                 mapScene.add(mapLoadedModel);
 
                 // Hotspot Data - linking to checkpoint IDs
-                // These positions are relative to the loaded FBX model's coordinate system
+                // These positions are relative to the loaded GLB model's coordinate system
                 const mapHotspots = [
                     { position: new THREE.Vector3(0, 0.5, 1), name: "Checkpoint 1", description: "Learn about the Colored Flower", checkpointId: 1 },
                     { position: new THREE.Vector3(2, 0.8, -1), name: "Checkpoint 2", description: "Discover the Hairy Woodpecker", checkpointId: 2 },
@@ -305,7 +305,7 @@
 
                 console.log("Map Model loaded and hotspots created.");
             }, undefined, (error) => {
-                console.error('Error loading Map FBX model:', error);
+                console.error('Error loading Map GLB model:', error); // Changed error message
                 showCustomMessage("Error loading 3D map model. Please try again later.", () => {});
             });
 
