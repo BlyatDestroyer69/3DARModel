@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bukit Kiara AR World</title>
+    <title>Bukit Kiara AR World - Scan to Enter</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
@@ -12,25 +12,9 @@
     <style>
         body {
             margin: 0;
-            overflow: hidden; /* Important for AR scene to fill screen */
+            overflow: hidden;
             font-family: 'Inter', sans-serif;
             background-color: #f0f0f0;
-        }
-
-        /* The A-Frame scene will fill the screen */
-        a-scene {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            display: block; /* Ensure it's rendered as a block element */
-            opacity: 0; /* Initially hidden, will fade in after welcome screen */
-            transition: opacity 1s ease-in-out; /* Smooth transition */
-        }
-
-        a-scene.active {
-            opacity: 1; /* Fully visible when active */
         }
 
         /* Welcome Screen Styles */
@@ -47,13 +31,13 @@
             justify-content: center;
             align-items: center;
             text-align: center;
-            z-index: 100; /* Ensure it's above other content */
-            transition: opacity 1s ease-in-out; /* Smooth fade out */
+            z-index: 100;
+            transition: opacity 1s ease-in-out;
         }
 
         #welcome-screen.hidden {
             opacity: 0;
-            pointer-events: none; /* Make it unclickable when hidden */
+            pointer-events: none;
         }
 
         #welcome-screen h1 {
@@ -86,373 +70,103 @@
             transform: translateY(-2px);
         }
 
-        /* Info Panel Styles (for checkpoint details) */
-        #info-panel {
+        /* AR Scene for Scanning */
+        a-scene {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            opacity: 0; /* Initially hidden */
+            transition: opacity 1s ease-in-out;
+        }
+
+        a-scene.active {
+            opacity: 1; /* Visible when active */
+        }
+
+        #scan-message {
             position: absolute;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background-color: rgba(255, 255, 255, 0.95);
-            padding: 20px 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-            z-index: 50; /* Above AR scene, below welcome screen */
-            display: none; /* Hidden by default */
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            max-width: 90%;
-            width: 400px;
-            box-sizing: border-box;
-        }
-
-        #info-panel h2 {
-            color: #2c3e50;
-            margin-top: 0;
-            margin-bottom: 10px;
-            font-size: 1.8em;
-        }
-
-        #info-panel p {
-            color: #555;
-            font-size: 1em;
-            margin-bottom: 20px;
-            line-height: 1.5;
-        }
-
-        .info-panel-buttons button {
-            background-color: #3498db;
+            background-color: rgba(0, 0, 0, 0.7);
             color: white;
             padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1em;
-            margin: 0 10px;
-            transition: background-color 0.3s ease;
-        }
-
-        .info-panel-buttons button:hover {
-            background-color: #2980b9;
-        }
-
-        #close-info-panel, #go-to-checkpoint {
-            background-color: #e74c3c;
-        }
-
-        #close-info-panel:hover, #go-to-checkpoint:hover {
-            background-color: #c0392b;
-        }
-
-        #go-to-checkpoint {
-            background-color: #2ecc71;
-        }
-
-        #go-to-checkpoint:hover {
-            background-color: #27ae60;
-        }
-
-        /* Custom Message Box Styles */
-        #custom-message-box {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.85);
-            color: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            text-align: center;
-            z-index: 101; /* Above welcome screen and info panel */
-            display: none; /* Hidden by default */
-            flex-direction: column;
-            align-items: center;
-            max-width: 80%;
-            width: 400px;
-            box-sizing: border-box;
-        }
-
-        #custom-message-box p {
-            margin-bottom: 20px;
+            border-radius: 8px;
             font-size: 1.1em;
-        }
-
-        #custom-message-box button {
-            background-color: #3498db;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1em;
-            transition: background-color 0.3s ease;
-        }
-
-        #custom-message-box button:hover {
-            background-color: #2980b9;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            #welcome-screen h1 {
-                font-size: 2.2em;
-            }
-
-            #welcome-screen p {
-                font-size: 1em;
-                margin-bottom: 30px;
-            }
-
-            #welcome-button {
-                padding: 12px 25px;
-                font-size: 1.2em;
-            }
-
-            #info-panel {
-                padding: 15px 20px;
-                width: 95%;
-            }
-
-            #info-panel h2 {
-                font-size: 1.5em;
-            }
-
-            .info-panel-buttons button {
-                padding: 8px 15px;
-                font-size: 0.9em;
-                margin: 0 5px;
-            }
-            #custom-message-box {
-                padding: 20px;
-                width: 90%;
-            }
-            #custom-message-box p {
-                font-size: 1em;
-            }
+            text-align: center;
+            z-index: 50; /* Above AR scene */
+            display: none; /* Hidden until AR scene is active */
         }
     </style>
 </head>
 <body>
     <div id="welcome-screen">
         <h1>Welcome to Bukit Kiara AR World!</h1>
-        <p>Embark on an augmented reality adventure through Bukit Kiara. Explore its hidden wonders and learn about its vibrant ecosystem.</p>
-        <button id="welcome-button">Enter Experience</button>
+        <p>Scan the special map to unlock the interactive 3D experience.</p>
+        <button id="welcome-button">Start Scanning</button>
     </div>
 
     <a-scene
-        id="main-ar-scene"
-        mindar-image="imageTargetSrc: ./assets/targets.mind; filterMinCF:0.0001; filterBeta: 0.001; warmupTolerance: 0.1; missTolerance: 0.5;"
+        id="ar-scan-scene"
+        mindar-image="imageTargetSrc: ./assets/targets.mind; showImage: false;"
         vr-mode-ui="enabled: false"
         device-orientation-permission-ui="enabled: false"
         visible="false"
     >
-        <a-assets>
-            <a-asset-item id="map-model" src="./models/bukit_kiara_map.glb"></a-asset-item>
-        </a-assets>
-
-        <a-entity mindar-image-target="targetIndex: 0">
-            <a-entity id="map-3d-model-container" visible="false">
-                <a-gltf-model
-                    id="map-gltf"
-                    rotation="90 0 0"
-                    position="0 0 0"
-                    scale="0.2 0.2 0.2"
-                    src="#map-model"
-                    animation-mixer="clip: *; loop: repeat; clampWhenFinished: true;"
-                ></a-gltf-model>
-
-                <!-- Checkpoint Markers (Spheres) -->
-                <a-sphere
-                    data-checkpoint-id="1"
-                    position="-0.025 0 0.025"
-                    radius="0.008"
-                    color="#FF0000"
-                    opacity="0.8"
-                    material="shader: flat; transparent: true; alphaTest: 0.1;"
-                    class="checkpoint-marker"
-                ></a-sphere>
-
-                <a-sphere
-                    data-checkpoint-id="2"
-                    position="0.05 0 0.01"
-                    radius="0.008"
-                    color="#00FF00"
-                    opacity="0.8"
-                    material="shader: flat; transparent: true; alphaTest: 0.1;"
-                    class="checkpoint-marker"
-                ></a-sphere>
-
-                 <a-sphere
-                    data-checkpoint-id="3"
-                    position="0.02 0 -0.03"
-                    radius="0.008"
-                    color="#0000FF"
-                    opacity="0.8"
-                    material="shader: flat; transparent: true; alphaTest: 0.1;"
-                    class="checkpoint-marker"
-                ></a-sphere>
-
-                 <a-sphere
-                    data-checkpoint-id="4"
-                    position="-0.04 0 -0.015"
-                    radius="0.008"
-                    color="#FFFF00"
-                    opacity="0.8"
-                    material="shader: flat; transparent: true; alphaTest: 0.1;"
-                    class="checkpoint-marker"
-                ></a-sphere>
-
-                 <a-sphere
-                    data-checkpoint-id="5"
-                    position="0.0 0 0.04"
-                    radius="0.008"
-                    color="#FF00FF"
-                    opacity="0.8"
-                    material="shader: flat; transparent: true; alphaTest: 0.1;"
-                    class="checkpoint-marker"
-                ></a-sphere>
-
-            </a-entity>
-        </a-entity>
-
+        <a-entity mindar-image-target="targetIndex: 0"></a-entity>
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
     </a-scene>
 
-    <div id="info-panel">
-        <h2 id="info-panel-title"></h2>
-        <p id="info-panel-description"></p>
-        <div class="info-panel-buttons">
-            <button id="go-to-checkpoint">Enter Checkpoint Experience</button>
-            <button id="close-info-panel">Close</button>
-        </div>
-    </div>
-
-    <!-- Custom Message Box for alerts -->
-    <div id="custom-message-box">
-        <p id="custom-message-text"></p>
-        <button id="custom-message-button">OK</button>
-    </div>
+    <div id="scan-message">Please scan the Bukit Kiara map.</div>
 
     <script>
-        // Checkpoint data (same as before, ensure URLs match your checkpoint pages)
-        const CHECKPOINTS_DATA = [
-            { id: 1, name: 'Checkpoint 1: The Mystical Flower', description: 'A vibrant floral spot. Tap to learn more and experience it in AR!', url: 'checkpoint_1.html?checkpointId=1' },
-            { id: 2, name: 'Checkpoint 2: Woodpecker\'s Perch', description: 'Home to the elusive woodpecker. Tap to learn more and experience it in AR!', url: 'checkpoint_1.html?checkpointId=2' },
-            { id: 3, name: 'Checkpoint 3: Margarita Meadows', description: 'A beautiful expanse of Margarita Flower Bushes. Tap to learn more and experience it in AR!', url: 'checkpoint_1.html?checkpointId=3' },
-            { id: 4, name: 'Checkpoint 4: Serpent\'s Slumber', description: 'Learn about the fascinating reptiles inhabiting this area. Tap to learn more and experience it in AR!', url: 'checkpoint_1.html?checkpointId=4' },
-            { id: 5, name: 'Checkpoint 5: Crystal Tree Haven', description: 'Uncover the legends of the Japanese Tree Crystal. Tap to learn more and experience it in AR!', url: 'checkpoint_1.html?checkpointId=5' },
-            // Add more checkpoints as needed
-        ];
-
-        // Get DOM elements
         const welcomeScreen = document.getElementById('welcome-screen');
         const welcomeButton = document.getElementById('welcome-button');
-        const mainArScene = document.getElementById('main-ar-scene');
-        const map3DModelContainer = document.getElementById('map-3d-model-container');
-        const infoPanel = document.getElementById('info-panel');
-        const infoPanelTitle = document.getElementById('info-panel-title');
-        const infoPanelDescription = document.getElementById('info-panel-description');
-        const closeInfoPanelButton = document.getElementById('close-info-panel');
-        const goToCheckpointButton = document.getElementById('go-to-checkpoint');
-        let currentCheckpointId = null;
+        const arScanScene = document.getElementById('ar-scan-scene');
+        const scanMessage = document.getElementById('scan-message');
+        let targetDetected = false; // Flag to prevent multiple redirects
 
-        // Custom Message Box elements
-        const customMessageBox = document.getElementById('custom-message-box');
-        const customMessageText = document.getElementById('custom-message-text');
-        const customMessageButton = document.getElementById('custom-message-button');
-
-        /**
-         * Displays a custom message box to the user.
-         * @param {string} message The message to display.
-         * @param {function} onOkCallback Function to call when OK button is clicked.
-         */
-        function showCustomMessage(message, onOkCallback = () => {}) {
-            customMessageText.textContent = message;
-            customMessageBox.style.display = 'flex'; // Show the message box
-            customMessageButton.onclick = () => {
-                customMessageBox.style.display = 'none'; // Hide the message box
-                onOkCallback(); // Execute callback
-            };
-        }
-
-        // Function to display the info panel for a checkpoint
-        function displayInfoPanel(checkpoint) {
-            infoPanelTitle.textContent = checkpoint.name;
-            infoPanelDescription.textContent = checkpoint.description;
-            currentCheckpointId = checkpoint.id;
-            infoPanel.style.display = 'flex'; // Show the info panel
-        }
-
-        // Function to hide the info panel
-        function hideInfoPanel() {
-            infoPanel.style.display = 'none'; // Hide the info panel
-            currentCheckpointId = null;
-        }
-
-        // Event listener for the "Enter Experience" (Welcome) button
         welcomeButton.addEventListener('click', () => {
-            welcomeScreen.classList.add('hidden'); // Fade out the welcome screen
-            // After fade out, activate the AR scene
+            welcomeScreen.classList.add('hidden');
             welcomeScreen.addEventListener('transitionend', () => {
-                mainArScene.setAttribute('visible', 'true'); // Activate the A-Frame scene (and camera)
-                mainArScene.classList.add('active'); // Apply active class for opacity transition
-                console.log("AR Scene Activated. Please scan the map target.");
-            }, { once: true }); // Ensure this runs only once
+                arScanScene.setAttribute('visible', 'true'); // Activate A-Frame scene
+                arScanScene.classList.add('active'); // Fade in A-Frame scene
+                scanMessage.style.display = 'block'; // Show scan message
+                console.log("AR Scanner Activated. Please scan the map target.");
+            }, { once: true });
         });
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Event listeners for targetFound and targetLost
             const mindarImageTargetEntity = document.querySelector('a-entity[mindar-image-target]');
+
             if (mindarImageTargetEntity) {
                 mindarImageTargetEntity.addEventListener('targetFound', () => {
-                    console.log("Map Target Found! Displaying 3D map model.");
-                    map3DModelContainer.setAttribute('visible', 'true'); // Show the 3D map model
+                    if (!targetDetected) { // Only redirect on first detection
+                        targetDetected = true;
+                        console.log("Map Target Found! Redirecting to 3D map viewer...");
+                        scanMessage.textContent = "Map detected! Loading 3D experience...";
+                        scanMessage.style.backgroundColor = 'rgba(46, 204, 113, 0.8)'; // Green background
+                        
+                        // Redirect after a short delay to show the message
+                        setTimeout(() => {
+                            window.location.href = 'bukitkiaramap.html';
+                        }, 1500); // 1.5 seconds delay
+                    }
                 });
 
                 mindarImageTargetEntity.addEventListener('targetLost', () => {
-                    console.log("Map Target Lost! Hiding 3D map model.");
-                    map3DModelContainer.setAttribute('visible', 'false'); // Hide the 3D map model
-                    hideInfoPanel(); // Also hide info panel if target is lost
+                    // If target is lost before redirection, reset message
+                    if (!targetDetected) {
+                        scanMessage.textContent = "Please scan the Bukit Kiara map.";
+                        scanMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'; // Back to black
+                    }
                 });
             } else {
                 console.error("MindAR image target entity not found. Is your A-Frame scene correctly structured?");
-                showCustomMessage("AR target detection module not found. Please ensure all AR scripts are loaded correctly.");
             }
-
-            // Event listener for checkpoint markers
-            mainArScene.addEventListener('click', (evt) => {
-                // Ensure intersection is valid and the clicked entity has the 'checkpoint-marker' class
-                const clickedEntity = evt.detail.intersection && evt.detail.intersection.object.el;
-                if (clickedEntity && clickedEntity.classList.contains('checkpoint-marker')) {
-                    const checkpointId = clickedEntity.getAttribute('data-checkpoint-id');
-                    const checkpoint = CHECKPOINTS_DATA.find(cp => cp.id == checkpointId);
-                    if (checkpoint) {
-                        displayInfoPanel(checkpoint);
-                        console.log(`Checkpoint ${checkpoint.id} clicked!`);
-                    } else {
-                        console.warn(`Checkpoint data not found for ID: ${checkpointId}`);
-                        showCustomMessage(`Details for Checkpoint ${checkpointId} not available.`);
-                    }
-                }
-            });
-
-            // Info Panel button listeners
-            closeInfoPanelButton.addEventListener('click', hideInfoPanel);
-            goToCheckpointButton.addEventListener('click', () => {
-                if (currentCheckpointId !== null) {
-                    // FIX: Changed CHECKPOINT_DATA to CHECKPOINTS_DATA
-                    const checkpoint = CHECKPOINTS_DATA.find(cp => cp.id === currentCheckpointId);
-                    if (checkpoint) {
-                        window.location.href = checkpoint.url; // Navigate to checkpoint page
-                    } else {
-                        console.error(`Checkpoint data for ID ${currentCheckpointId} not found when trying to navigate.`);
-                        showCustomMessage(`Could not navigate to checkpoint ${currentCheckpointId}. Data missing.`);
-                    }
-                } else {
-                    showCustomMessage("No checkpoint selected to navigate to.");
-                }
-            });
         });
     </script>
 </body>
