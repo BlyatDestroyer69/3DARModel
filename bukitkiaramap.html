@@ -37,53 +37,43 @@
             cursor: pointer;
             user-select: none;
             white-space: nowrap;
-            transform: translate(-50%, -100%);
-            opacity: 0.8;
-            transition: opacity 0.3s ease;
-            z-index: 10;
+            transform: translate(-50%, -100%); /* Center above the point */
+            z-index: 2; /* Above canvas */
+            display: none; /* Hidden by default */
+            transition: opacity 0.2s ease-in-out;
+            opacity: 0;
         }
-        .hotspot-label:hover {
+        .hotspot-label.visible {
             opacity: 1;
         }
-
-        .map-controls {
+        .controls-panel {
             position: absolute;
-            bottom: 20px;
-            width: 100%;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(255, 255, 255, 0.85);
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 10;
             display: flex;
-            justify-content: center;
-            gap: 15px;
-            z-index: 25; /* Higher than canvas, so buttons are clickable */
-            padding: 0 10px;
-            box-sizing: border-box;
+            gap: 10px;
             flex-wrap: wrap;
         }
-
-        .action-button {
-            background-color: #2ecc71; /* Green */
+        .control-button {
+            background-color: #007bff;
             color: white;
-            padding: 15px 30px;
+            padding: 8px 15px;
             border: none;
-            border-radius: 10px; /* Rounded corners */
-            font-size: 1.5em;
+            border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            outline: none; /* Remove outline on focus */
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+        .control-button:hover {
+            background-color: #0056b3;
         }
 
-        .action-button:hover {
-            background-color: #27ae60; /* Darker green on hover */
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        .action-button:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Loading Screen */
+        /* Loading Screen Styles */
         .loading-screen {
             position: fixed;
             top: 0;
@@ -120,153 +110,49 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Custom Message Box */
-        .message-box {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 25px;
-            border-radius: 12px;
-            text-align: center;
-            z-index: 2000;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-            max-width: 80vw;
-            font-size: 1.1em;
-            line-height: 1.5;
-        }
-        .message-box button {
-            background-color: #3498db;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: background-color 0.3s ease;
-        }
-        .message-box button:hover {
-            background-color: #2980b9;
-        }
-
-        /* Camera Coordinates Display */
-        #camera-coordinates-display {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 0.9em;
-            font-family: monospace;
-            z-index: 100;
-        }
-
-        /* Responsive Adjustments */
         @media (max-width: 768px) {
-            .map-controls .action-button {
-                padding: 12px 20px;
-                font-size: 1em;
-            }
-            #camera-coordinates-display {
-                font-size: 0.8em;
-                padding: 6px 10px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .map-controls {
-                flex-direction: column;
-                gap: 10px;
+            .controls-panel {
+                top: auto;
                 bottom: 10px;
-            }
-            .map-controls .action-button {
+                left: 50%;
+                transform: translateX(-50%);
                 width: calc(100% - 20px);
-                max-width: 300px;
-                margin: 0 auto;
+                justify-content: center;
             }
-            #camera-coordinates-display {
-                font-size: 0.7em;
-                padding: 5px 8px;
+            .control-button {
+                flex-grow: 1; /* Allow buttons to take more space on small screens */
             }
         }
     </style>
-    <!-- Three.js and its addons for WebXR and 3D rendering -->
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
-                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
-            }
-        }
-    </script>
 </head>
 <body>
     <div id="loading-screen" class="loading-screen hidden">
         <div class="spinner"></div>
-        <p>Loading Map...</p>
+        <p>Loading 3D Map...</p>
     </div>
 
     <div id="container"></div>
 
-    <div class="map-controls">
-        <button id="map-back-to-ar-button" class="action-button">Back to AR Scan</button>
-        <button id="map-return-to-home-button" class="action-button">Return to Home</button>
-    </div>
-
-    <div id="camera-coordinates-display">
-        Camera Position: X: 0.00, Y: 0.00, Z: 0.00
+    <div class="controls-panel">
+        <button id="mapBackToArButton" class="control-button">Back to AR Scan</button>
+        <button id="mapReturnToHomeButton" class="control-button">Return to Home</button>
     </div>
 
     <script type="module">
-        import * as THREE from 'three';
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
+        import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/controls/OrbitControls.js';
+        // Import FBXLoader instead of GLTFLoader
+        import { FBXLoader } from 'https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/loaders/FBXLoader.js';
 
-        // --- DOM Elements ---
-        const container = document.getElementById('container');
-        const mapBackToArButton = document.getElementById('map-back-to-ar-button');
-        const mapReturnToHomeButton = document.getElementById('map-return-to-home-button');
-        const loadingScreen = document.getElementById('loading-screen');
-        const cameraCoordinatesDisplay = document.getElementById('camera-coordinates-display');
+        let mapScene, mapCamera, mapRenderer, mapControls, mapRaycaster, mapMouse;
+        let mapModel; // To store the loaded FBX model
+        const hotspotLabels = {}; // To manage HTML labels for hotspots
+        let currentHotspotHovered = null;
 
-        // --- Three.js Variables ---
-        let mapScene, mapCamera, mapRenderer, mapControls;
-        let mapLoadedModel = null;
-        let mapAnimateId = null;
-        const hotspots = [];
+        const mapBackToArButton = document.getElementById('mapBackToArButton');
+        const mapReturnToHomeButton = document.getElementById('mapReturnToHomeButton');
+        const loadingScreen = document.getElementById('loading-screen'); // Get loading screen
 
-        // --- Model Path ---
-        const MAP_MODEL_PATH = 'models/bukit_kiara_map.glb';
-
-        // --- Loading Manager ---
-        const manager = new THREE.LoadingManager();
-        manager.onStart = function (url, itemsLoaded, itemsTotal) {
-            console.log('Started loading file: ' + url + '. Loaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.');
-            showLoading();
-        };
-        manager.onLoad = function () {
-            console.log('Loading complete!');
-            setTimeout(() => {
-                hideLoading();
-            }, 500);
-        };
-        manager.onProgress = function (url, itemsLoaded, itemsTotal) {
-            console.log('Loading file: ' + url + '. Loaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.');
-        };
-        manager.onError = function (url) {
-            console.error('There was an error loading ' + url);
-            hideLoading();
-            showCustomMessage("Error loading 3D map model. Please try again later.", () => {});
-        };
-
-        const gltfLoader = new GLTFLoader(manager);
-
-        // --- Utility Functions ---
         function showLoading() {
             loadingScreen.classList.remove('hidden');
         }
@@ -275,219 +161,209 @@
             loadingScreen.classList.add('hidden');
         }
 
-        // --- Custom Message Box ---
-        function showCustomMessage(message, onCloseCallback) {
-            const messageBox = document.createElement('div');
-            messageBox.className = 'message-box';
-            messageBox.innerHTML = `
-                <p>${message}</p>
-                <button>OK</button>
-            `;
-            document.body.appendChild(messageBox);
-
-            messageBox.querySelector('button').addEventListener('click', () => {
-                document.body.removeChild(messageBox);
-                if (onCloseCallback) {
-                    onCloseCallback();
-                }
-            });
-        }
-
-        // --- Map Viewer Functions ---
         function initMapViewer() {
-            disposeMapViewer();
+            const container = document.getElementById('container');
 
+            // Scene
             mapScene = new THREE.Scene();
-            mapScene.background = new THREE.Color(0xe0e0e0);
+            mapScene.background = new THREE.Color(0xddeeff); // Light blue background
 
-            mapCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-            mapCamera.position.set(0, 8, 2);
+            // Camera
+            mapCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            mapCamera.position.set(0, 5, 10); // Adjust camera position for your map size
 
+            // Renderer
             mapRenderer = new THREE.WebGLRenderer({ antialias: true });
+            mapRenderer.setPixelRatio(window.devicePixelRatio);
             mapRenderer.setSize(window.innerWidth, window.innerHeight);
             container.appendChild(mapRenderer.domElement);
 
+            // OrbitControls
             mapControls = new OrbitControls(mapCamera, mapRenderer.domElement);
-            mapControls.target.set(0, 0, 0);
-            mapControls.enableDamping = true;
-            mapControls.dampingFactor = 0.1;
-            mapControls.minDistance = 0.5;
-            mapControls.maxDistance = 15;
-            mapControls.update();
+            mapControls.enableDamping = true; // an animation loop is required when damping is enabled
+            mapControls.dampingFactor = 0.05;
+            mapControls.screenSpacePanning = false;
+            mapControls.minDistance = 1; // Minimum zoom
+            mapControls.maxDistance = 50; // Maximum zoom
+            mapControls.maxPolarAngle = Math.PI / 2; // Prevent camera from going below the ground
 
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
             mapScene.add(ambientLight);
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            directionalLight.position.set(5, 10, 7.5);
-            directionalLight.castShadow = true;
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            directionalLight.position.set(5, 10, 7);
             mapScene.add(directionalLight);
 
-            gltfLoader.load(MAP_MODEL_PATH, (gltf) => {
-                mapLoadedModel = gltf.scene;
-                mapScene.add(mapLoadedModel);
+            // Raycaster for interactions
+            mapRaycaster = new THREE.Raycaster();
+            mapMouse = new THREE.Vector2();
 
-                // Rotate Y-up to Z-up
-                mapLoadedModel.rotation.x = -Math.PI / 2;
+            // Loading Manager with progress updates
+            const manager = new THREE.LoadingManager();
+            manager.onStart = function (url, itemsLoaded, itemsTotal) {
+                console.log('Started loading file: ' + url + '. Loaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.');
+            };
+            manager.onProgress = function (url, itemsLoaded, itemsTotal) {
+                console.log('Loading file: ' + url + '. Loaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.');
+            };
+            manager.onLoad = function () {
+                console.log('Loading complete!');
+                hideLoading(); // Hide loading screen when all assets are loaded
+            };
+            manager.onError = function (url) {
+                console.error('There was an error loading ' + url);
+                hideLoading(); // Hide loading even on error
+            };
 
-                // Scale and center model
-                const box = new THREE.Box3().setFromObject(mapLoadedModel);
-                const size = box.getSize(new THREE.Vector3());
-                const center = box.getCenter(new THREE.Vector3());
+            // FBX Loader
+            const fbxLoader = new FBXLoader(manager);
+            fbxLoader.load(
+                'models/bukit_kiara_map.fbx', // Change to your FBX file path
+                (fbx) => {
+                    mapModel = fbx;
+                    mapScene.add(mapModel);
+                    console.log('FBX model loaded successfully:', mapModel);
 
-                const maxDim = Math.max(size.x, size.y, size.z);
-                const targetSize = 5;
-                const scaleFactor = targetSize / maxDim;
+                    // **Hotspot Logic for FBX**
+                    // Since FBX doesn't have a direct 'extras' equivalent like GLB,
+                    // you'll need to identify your hotspots differently.
+                    // Common approaches:
+                    // 1. Name your hotspot meshes/objects in your 3D software (e.g., "Hotspot_Checkpoint1").
+                    //    Then iterate through children to find them.
+                    // 2. Add invisible helper meshes in your 3D software at hotspot locations.
+                    // 3. Define hotspot positions and target URLs in a separate JSON file
+                    //    and programmatically create clickable spheres at those locations.
 
-                mapLoadedModel.scale.set(scaleFactor, scaleFactor, scaleFactor);
+                    // Example (Assuming you've named your hotspot objects in Blender/etc. like "Hotspot_Checkpoint1"):
+                    mapModel.traverse((child) => {
+                        if (child.isMesh && child.name.startsWith('Hotspot_')) {
+                            console.log(`Found potential hotspot mesh: ${child.name}`);
+                            child.userData.isHotspot = true;
 
-                box.setFromObject(mapLoadedModel);
-                box.getCenter(center);
+                            // You'll need a mapping from object name to target URL.
+                            // This is a placeholder. You'll replace this with your actual URLs.
+                            const hotspotData = {
+                                'Hotspot_Checkpoint1': 'checkpoint_1.html',
+                                'Hotspot_Checkpoint2': 'checkpoint_2.html', // Add more as needed
+                                // ...
+                            };
 
-                mapLoadedModel.position.sub(center);
-                const newBox = new THREE.Box3().setFromObject(mapLoadedModel);
-                mapLoadedModel.position.y += Math.abs(newBox.min.y);
+                            const hotspotName = child.name; // e.g., "Hotspot_Checkpoint1"
+                            child.userData.targetUrl = hotspotData[hotspotName];
+                            child.userData.name = hotspotName.replace('Hotspot_', '').replace(/([A-Z])/g, ' $1').trim(); // For display
 
-                // Create hotspots from GLTF nodes
-                mapLoadedModel.traverse((node) => {
-                    if (node.isMesh && node.name.startsWith('Checkpoint_') && node.userData && node.userData.targetUrl) {
-                        const checkpointIdMatch = node.name.match(/Checkpoint_(\d+)/);
-                        const checkpointName = checkpointIdMatch ? `Checkpoint ${checkpointIdMatch[1]}` : node.name;
-                        const targetUrl = node.userData.targetUrl;
-                        const description = node.userData.description || `Go to ${checkpointName} details`;
+                            // Create an HTML label for the hotspot
+                            if (child.userData.targetUrl) {
+                                const label = document.createElement('div');
+                                label.className = 'hotspot-label';
+                                label.textContent = child.userData.name;
+                                document.body.appendChild(label);
+                                hotspotLabels[child.uuid] = label; // Store with object's unique ID
+                            }
+                        }
+                    });
 
-                        const worldPosition = new THREE.Vector3();
-                        node.getWorldPosition(worldPosition);
+                    // You might need to adjust camera or model scale after loading
+                    const box = new THREE.Box3().setFromObject(mapModel);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
 
-                        createHotspot(worldPosition, checkpointName, description, targetUrl);
-                    }
-                });
+                    // Center the model
+                    mapModel.position.sub(center);
 
-                console.log("Map Model loaded, scaled, centered, and hotspots created from GLTF data.");
-            }, undefined, (error) => {
-                console.error('Error loading Map GLB model:', error);
-                showCustomMessage("Error loading 3D map model. Please try again later.", () => {});
-            });
+                    // Optional: Scale model if it's too big/small
+                    // mapModel.scale.setScalar(1 / size.length() * desiredScale); // desiredScale ~ 5-10
+                    // mapCamera.position.copy(center).add(new THREE.Vector3(0, size.y * 0.8, size.z * 1.5)); // Adjust camera to view model
+
+                },
+                (xhr) => {
+                    // Progress callback for FBXLoader
+                    console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+                },
+                (error) => {
+                    console.error('Error loading FBX model:', error);
+                    // You can display an error message to the user here
+                    alert('Failed to load 3D map. Please try again later.');
+                }
+            );
+
+            window.addEventListener('resize', onWindowResize, false);
+            mapRenderer.domElement.addEventListener('mousemove', onMapCanvasMouseMove, false);
+            mapRenderer.domElement.addEventListener('click', onMapCanvasClick, false);
 
             animateMapViewer();
-            window.addEventListener('resize', onMapWindowResize);
-            mapRenderer.domElement.addEventListener('click', onMapCanvasClick);
         }
 
-        function createHotspot(position, name, description, targetUrl) {
-            const label = document.createElement('div');
-            label.className = 'hotspot-label';
-            label.textContent = name;
-            label.title = description;
-            label.style.position = 'absolute';
-            label.style.pointerEvents = 'auto';
-            label.style.cursor = 'pointer';
-
-            label.addEventListener('click', () => {
-                console.log(`Clicked hotspot: ${name}. Redirecting to ${targetUrl}`);
-                showLoading();
-                window.location.href = targetUrl;
-            });
-
-            container.appendChild(label);
-
-            const markerGeometry = new THREE.SphereGeometry(0.1, 16, 16);
-            const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.7 });
-            const marker = new THREE.Mesh(markerGeometry, markerMaterial);
-            marker.position.copy(position);
-            marker.userData.isHotspot = true;
-            marker.userData.targetUrl = targetUrl;
-            marker.userData.name = name;
-            mapScene.add(marker);
-
-            hotspots.push({ node: marker, label: label });
-        }
-
-        function updateHotspots() {
-            hotspots.forEach(({ node, label }) => {
-                const pos = new THREE.Vector3();
-                node.getWorldPosition(pos);
-                pos.project(mapCamera);
-
-                const x = (pos.x * 0.5 + 0.5) * window.innerWidth;
-                const y = (-pos.y * 0.5 + 0.5) * window.innerHeight;
-
-                label.style.transform = `translate(-50%, -100%) translate(${x}px,${y}px)`;
-
-                const isVisible = pos.z < 1;
-                label.style.display = isVisible ? 'block' : 'none';
-            });
+        function onWindowResize() {
+            mapCamera.aspect = window.innerWidth / window.innerHeight;
+            mapCamera.updateProjectionMatrix();
+            mapRenderer.setSize(window.innerWidth, window.innerHeight);
         }
 
         function animateMapViewer() {
-            if (mapRenderer) {
-                mapAnimateId = requestAnimationFrame(animateMapViewer);
-                if (mapControls) mapControls.update();
-                updateHotspots();
+            requestAnimationFrame(animateMapViewer);
+            mapControls.update(); // only required if controls.enableDamping is set to true
+            mapRenderer.render(mapScene, mapCamera);
 
-                if (mapCamera) {
-                    const camPos = mapCamera.position;
-                    cameraCoordinatesDisplay.textContent = `Camera Position: X: ${camPos.x.toFixed(2)}, Y: ${camPos.y.toFixed(2)}, Z: ${camPos.z.toFixed(2)}`;
-                }
+            // Update hotspot label positions
+            if (mapModel) { // Ensure model is loaded
+                mapModel.traverse((child) => {
+                    if (child.isMesh && child.userData.isHotspot && hotspotLabels[child.uuid]) {
+                        const label = hotspotLabels[child.uuid];
+                        // Get the world position of the hotspot object
+                        const hotspotWorldPosition = new THREE.Vector3();
+                        child.getWorldPosition(hotspotWorldPosition);
 
-                mapRenderer.render(mapScene, mapCamera);
-            }
-        }
+                        // Project world position to screen position
+                        hotspotWorldPosition.project(mapCamera);
 
-        function onMapWindowResize() {
-            if (mapCamera && mapRenderer) {
-                mapCamera.aspect = window.innerWidth / window.innerHeight;
-                mapCamera.updateProjectionMatrix();
-                mapRenderer.setSize(window.innerWidth, window.innerHeight);
-                updateHotspots();
-            }
-        }
+                        const x = (hotspotWorldPosition.x * 0.5 + 0.5) * window.innerWidth;
+                        const y = (-hotspotWorldPosition.y * 0.5 + 0.5) * window.innerHeight;
 
-        function disposeMapViewer() {
-            if (mapAnimateId) {
-                cancelAnimationFrame(mapAnimateId);
-                mapAnimateId = null;
-            }
-            if (mapScene) {
-                mapScene.traverse(obj => {
-                    if (obj.isMesh) {
-                        if (obj.geometry) obj.geometry.dispose();
-                        if (obj.material) {
-                            if (Array.isArray(obj.material)) {
-                                obj.material.forEach(material => material.dispose());
+                        // Check if hotspot is in front of the camera and within bounds
+                        if (hotspotWorldPosition.z < 1) { // z < 1 means it's in front of the camera
+                            label.style.left = `${x}px`;
+                            label.style.top = `${y}px`;
+                            if (currentHotspotHovered === child) {
+                                label.classList.add('visible');
                             } else {
-                                obj.material.dispose();
+                                label.classList.remove('visible');
                             }
+                        } else {
+                            label.classList.remove('visible'); // Hide if behind camera
                         }
                     }
                 });
-                mapScene.clear();
-                mapScene = null;
-            }
-            if (mapRenderer) {
-                mapRenderer.dispose();
-                mapRenderer = null;
-            }
-            if (mapControls) {
-                mapControls.dispose();
-                mapControls = null;
-            }
-            if (mapLoadedModel) {
-                mapLoadedModel = null;
-            }
-            hotspots.forEach(({ label }) => {
-                if (label.parentNode) {
-                    label.parentNode.removeChild(label);
-                }
-            });
-            hotspots.length = 0;
-            window.removeEventListener('resize', onMapWindowResize);
-            if (mapRenderer && mapRenderer.domElement) {
-                mapRenderer.domElement.removeEventListener('click', onMapCanvasClick);
             }
         }
 
-        const mapRaycaster = new THREE.Raycaster();
-        const mapMouse = new THREE.Vector2();
+        function onMapCanvasMouseMove(event) {
+            mapMouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mapMouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+
+            mapRaycaster.setFromCamera(mapMouse, mapCamera);
+
+            // Only intersect with the map model's children to find hotspots
+            const intersects = mapRaycaster.intersectObjects(mapModel ? mapModel.children : [], true);
+
+            let foundHotspot = false;
+            for (const intersect of intersects) {
+                if (intersect.object.userData.isHotspot) {
+                    if (currentHotspotHovered !== intersect.object) {
+                        currentHotspotHovered = intersect.object;
+                        mapRenderer.domElement.style.cursor = 'pointer';
+                        console.log(`Hovering over hotspot: ${intersect.object.userData.name}`);
+                    }
+                    foundHotspot = true;
+                    break;
+                }
+            }
+
+            if (!foundHotspot && currentHotspotHovered) {
+                currentHotspotHovered = null;
+                mapRenderer.domElement.style.cursor = 'grab'; // Default cursor for OrbitControls
+            }
+        }
 
         function onMapCanvasClick(event) {
             mapMouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -495,7 +371,7 @@
 
             mapRaycaster.setFromCamera(mapMouse, mapCamera);
 
-            const intersects = mapRaycaster.intersectObjects(mapScene.children, true);
+            const intersects = mapRaycaster.intersectObjects(mapModel ? mapModel.children : [], true);
 
             for (const intersect of intersects) {
                 if (intersect.object.userData.isHotspot && intersect.object.userData.targetUrl) {
