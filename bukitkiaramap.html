@@ -72,7 +72,6 @@
         .control-button:hover {
             background-color: #0056b3;
         }
-
         /* Loading Screen Styles */
         .loading-screen {
             position: fixed;
@@ -89,12 +88,10 @@
             z-index: 1000; /* Ensure it's on top */
             transition: opacity 0.5s ease-out;
         }
-
         .loading-screen.hidden {
             opacity: 0;
             pointer-events: none; /* Disable interaction when hidden */
         }
-
         .spinner {
             border: 8px solid rgba(255, 255, 255, 0.3);
             border-top: 8px solid #3498db; /* Blue spinner */
@@ -104,12 +101,10 @@
             animation: spin 1s linear infinite;
             margin-bottom: 20px;
         }
-
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
         @media (max-width: 768px) {
             .controls-panel {
                 top: auto;
@@ -130,67 +125,53 @@
         <div class="spinner"></div>
         <p>Loading 3D Map...</p>
     </div>
-
     <div id="container"></div>
-
     <div class="controls-panel">
         <button id="mapBackToArButton" class="control-button">Back to AR Scan</button>
         <button id="mapReturnToHomeButton" class="control-button">Return to Home</button>
     </div>
-
-    <script type="module">
-        import * as THREE from 'https://unpkg.com/three@0.158.0/build/three.module.js';
-        import { OrbitControls } from 'https://unpkg.com/three@0.158.0/examples/jsm/controls/OrbitControls.js';
-        import { FBXLoader } from 'https://unpkg.com/three@0.158.0/examples/jsm/loaders/FBXLoader.js';
-
+    <!-- Include Three.js from a CDN -->
+    <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.158.0/examples/jsm/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/three@0.158.0/examples/jsm/loaders/FBXLoader.js"></script>
+    <script>
         let mapScene, mapCamera, mapRenderer, mapControls, mapRaycaster, mapMouse;
         let mapModel;
         const hotspotLabels = {};
         let currentHotspotHovered = null;
-
         const mapBackToArButton = document.getElementById('mapBackToArButton');
         const mapReturnToHomeButton = document.getElementById('mapReturnToHomeButton');
         const loadingScreen = document.getElementById('loading-screen');
-
         function showLoading() {
             loadingScreen.classList.remove('hidden');
         }
-
         function hideLoading() {
             loadingScreen.classList.add('hidden');
         }
-
         function initMapViewer() {
             const container = document.getElementById('container');
-
             mapScene = new THREE.Scene();
             mapScene.background = new THREE.Color(0xddeeff);
-
             mapCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             mapCamera.position.set(0, 5, 10);
-
             mapRenderer = new THREE.WebGLRenderer({ antialias: true });
             mapRenderer.setPixelRatio(window.devicePixelRatio);
             mapRenderer.setSize(window.innerWidth, window.innerHeight);
             container.appendChild(mapRenderer.domElement);
-
-            mapControls = new OrbitControls(mapCamera, mapRenderer.domElement);
+            mapControls = new THREE.OrbitControls(mapCamera, mapRenderer.domElement);
             mapControls.enableDamping = true;
             mapControls.dampingFactor = 0.05;
             mapControls.screenSpacePanning = false;
             mapControls.minDistance = 1;
             mapControls.maxDistance = 50;
             mapControls.maxPolarAngle = Math.PI / 2;
-
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
             mapScene.add(ambientLight);
             const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
             directionalLight.position.set(5, 10, 7);
             mapScene.add(directionalLight);
-
             mapRaycaster = new THREE.Raycaster();
             mapMouse = new THREE.Vector2();
-
             const manager = new THREE.LoadingManager();
             manager.onStart = function (url, itemsLoaded, itemsTotal) {
                 console.log('Started loading file: ' + url + '. Loaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.');
@@ -206,20 +187,17 @@
                 console.error('There was an error loading ' + url);
                 hideLoading();
             };
-
-            const fbxLoader = new FBXLoader(manager);
+            const fbxLoader = new THREE.FBXLoader(manager);
             fbxLoader.load(
                 'models/BukitKiaraMap.fbx',
                 (fbx) => {
                     mapModel = fbx;
                     mapScene.add(mapModel);
                     console.log('FBX model loaded successfully:', mapModel);
-
                     mapModel.traverse((child) => {
                         if (child.isMesh && child.name.startsWith('Hotspot_')) {
                             console.log(`Found potential hotspot mesh: ${child.name}`);
                             child.userData.isHotspot = true;
-
                             const hotspotData = {
                                 'Hotspot_Checkpoint1': 'checkpoint_1.html',
                                 'Hotspot_Checkpoint2': 'checkpoint_2.html',
@@ -231,11 +209,9 @@
                                 'Hotspot_Checkpoint8': 'checkpoint_8.html',
                                 'Hotspot_Checkpoint9': 'checkpoint_9.html',
                             };
-
                             const hotspotName = child.name;
                             child.userData.targetUrl = hotspotData[hotspotName];
                             child.userData.name = hotspotName.replace('Hotspot_', '').replace(/([A-Z])/g, ' $1').trim();
-
                             if (child.userData.targetUrl) {
                                 const label = document.createElement('div');
                                 label.className = 'hotspot-label';
@@ -245,11 +221,9 @@
                             }
                         }
                     });
-
                     const box = new THREE.Box3().setFromObject(mapModel);
                     const center = box.getCenter(new THREE.Vector3());
                     const size = box.getSize(new THREE.Vector3());
-
                     mapModel.position.sub(center);
                 },
                 (xhr) => {
@@ -260,37 +234,29 @@
                     alert('Failed to load 3D map. Please try again later.');
                 }
             );
-
             window.addEventListener('resize', onWindowResize, false);
             mapRenderer.domElement.addEventListener('mousemove', onMapCanvasMouseMove, false);
             mapRenderer.domElement.addEventListener('click', onMapCanvasClick, false);
-
             animateMapViewer();
         }
-
         function onWindowResize() {
             mapCamera.aspect = window.innerWidth / window.innerHeight;
             mapCamera.updateProjectionMatrix();
             mapRenderer.setSize(window.innerWidth, window.innerHeight);
         }
-
         function animateMapViewer() {
             requestAnimationFrame(animateMapViewer);
             mapControls.update();
             mapRenderer.render(mapScene, mapCamera);
-
             if (mapModel) {
                 mapModel.traverse((child) => {
                     if (child.isMesh && child.userData.isHotspot && hotspotLabels[child.uuid]) {
                         const label = hotspotLabels[child.uuid];
                         const hotspotWorldPosition = new THREE.Vector3();
                         child.getWorldPosition(hotspotWorldPosition);
-
                         hotspotWorldPosition.project(mapCamera);
-
                         const x = (hotspotWorldPosition.x * 0.5 + 0.5) * window.innerWidth;
                         const y = (-hotspotWorldPosition.y * 0.5 + 0.5) * window.innerHeight;
-
                         if (hotspotWorldPosition.z < 1) {
                             label.style.left = `${x}px`;
                             label.style.top = `${y}px`;
@@ -306,15 +272,11 @@
                 });
             }
         }
-
         function onMapCanvasMouseMove(event) {
             mapMouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mapMouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
-
             mapRaycaster.setFromCamera(mapMouse, mapCamera);
-
             const intersects = mapRaycaster.intersectObjects(mapModel ? mapModel.children : [], true);
-
             let foundHotspot = false;
             for (const intersect of intersects) {
                 if (intersect.object.userData.isHotspot) {
@@ -327,21 +289,16 @@
                     break;
                 }
             }
-
             if (!foundHotspot && currentHotspotHovered) {
                 currentHotspotHovered = null;
                 mapRenderer.domElement.style.cursor = 'grab';
             }
         }
-
         function onMapCanvasClick(event) {
             mapMouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mapMouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
-
             mapRaycaster.setFromCamera(mapMouse, mapCamera);
-
             const intersects = mapRaycaster.intersectObjects(mapModel ? mapModel.children : [], true);
-
             for (const intersect of intersects) {
                 if (intersect.object.userData.isHotspot && intersect.object.userData.targetUrl) {
                     const hotspotName = intersect.object.userData.name;
@@ -353,17 +310,14 @@
                 }
             }
         }
-
         mapBackToArButton.addEventListener('click', () => {
             showLoading();
             window.location.href = 'index.html';
         });
-
         mapReturnToHomeButton.addEventListener('click', () => {
             showLoading();
             window.location.href = 'index.html';
         });
-
         window.addEventListener('load', () => {
             showLoading();
             initMapViewer();
