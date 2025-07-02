@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -565,3 +566,572 @@
     </script>
 </body>
 </html>
+=======
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bukit Kiara 3D Map - Three.js</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        #container {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            position: relative;
+        }
+        canvas {
+            display: block;
+            position: absolute; /* Added: Make canvas explicitly positioned */
+            top: 0;             /* Added: Position at top */
+            left: 0;            /* Added: Position at left */
+            z-index: 1;         /* Added: Set a z-index lower than controls */
+        }
+        .hotspot-label {
+            position: absolute;
+            background-color: #3498db;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            pointer-events: auto;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+            transform: translate(-50%, -100%);
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+        .hotspot-label:hover {
+            opacity: 1;
+        }
+
+        .map-controls {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            z-index: 25; /* Higher than canvas, so buttons are clickable */
+            padding: 0 10px;
+            box-sizing: border-box;
+            flex-wrap: wrap;
+        }
+
+        .action-button {
+            background-color: #2ecc71; /* Green */
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px; /* Rounded corners */
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            outline: none; /* Remove outline on focus */
+        }
+
+        .action-button:hover {
+            background-color: #27ae60; /* Darker green on hover */
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .action-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #2c3e50; /* Dark blue background */
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Ensure it's on top */
+            transition: opacity 0.5s ease-out;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none; /* Disable interaction when hidden */
+        }
+
+        .spinner {
+            border: 8px solid rgba(255, 255, 255, 0.3);
+            border-top: 8px solid #3498db; /* Blue spinner */
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Custom Message Box */
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            z-index: 2000;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            max-width: 80vw;
+            font-size: 1.1em;
+            line-height: 1.5;
+        }
+        .message-box button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+        }
+        .message-box button:hover {
+            background-color: #2980b9;
+        }
+
+        /* Camera Coordinates Display */
+        #camera-coordinates-display {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-family: monospace;
+            z-index: 100;
+        }
+
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .map-controls .action-button {
+                padding: 12px 20px;
+                font-size: 1em;
+            }
+            #camera-coordinates-display {
+                font-size: 0.8em;
+                padding: 6px 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .map-controls {
+                flex-direction: column;
+                gap: 10px;
+                bottom: 10px;
+            }
+            .map-controls .action-button {
+                width: calc(100% - 20px);
+                max-width: 300px;
+                margin: 0 auto;
+            }
+            #camera-coordinates-display {
+                font-size: 0.7em;
+                padding: 5px 8px;
+            }
+        }
+    </style>
+    <!-- Three.js and its addons for WebXR and 3D rendering -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="loading-screen" class="loading-screen hidden">
+        <div class="spinner"></div>
+        <p>Loading Map...</p>
+    </div>
+
+    <div id="container"></div>
+
+    <div class="map-controls">
+        <button id="map-back-to-ar-button" class="action-button">Back to AR Scan</button>
+        <button id="map-return-to-home-button" class="action-button">Return to Home</button>
+    </div>
+
+    <div id="camera-coordinates-display">
+        Camera Position: X: 0.00, Y: 0.00, Z: 0.00
+    </div>
+
+    <script type="module">
+        // Changed to use bare specifiers with importmap
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- DOM Elements ---
+        const container = document.getElementById('container');
+        const mapBackToArButton = document.getElementById('map-back-to-ar-button');
+        const mapReturnToHomeButton = document.getElementById('map-return-to-home-button');
+        const loadingScreen = document.getElementById('loading-screen');
+        const cameraCoordinatesDisplay = document.getElementById('camera-coordinates-display'); // New DOM element
+
+        // --- Three.js Variables ---
+        let mapScene, mapCamera, mapRenderer, mapControls;
+        let mapLoadedModel = null;
+        let mapAnimateId = null;
+        const hotspots = []; // Array to store hotspot objects and their DOM labels
+
+        // --- Model Paths (Customize this) ---
+        // IMPORTANT: Replace 'YOUR_HOSTED_MODEL_URL_HERE' with the actual direct URL to your GLB file.
+        // This should be a URL like: https://your-bucket-name.storage.googleapis.com/path/to/bukit_kiara_map.glb
+        const MAP_MODEL_PATH = 'models/bukit_kiara_map.glb'; // The map model for the 3D viewer (now GLB)
+
+        // --- Loading Manager ---
+        const manager = new THREE.LoadingManager();
+        manager.onStart = function (url, itemsLoaded, itemsTotal) {
+            console.log('Started loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.');
+            showLoading();
+        };
+        manager.onLoad = function () {
+            console.log('Loading complete!');
+            setTimeout(() => {
+                hideLoading();
+            }, 500);
+        };
+        manager.onProgress = function (url, itemsLoaded, itemsTotal) {
+            console.log('Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.');
+        };
+        manager.onError = function (url) {
+            console.error('There was an error loading ' + url);
+            hideLoading();
+            showCustomMessage("Error loading 3D map model. Please try again later.", () => {});
+        };
+
+        const gltfLoader = new GLTFLoader(manager); // Using GLTFLoader
+
+        // --- Utility Functions ---
+        function showLoading() {
+            loadingScreen.classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            loadingScreen.classList.add('hidden');
+        }
+
+        // --- Custom Message Box (instead of alert) ---
+        function showCustomMessage(message, onCloseCallback) {
+            const messageBox = document.createElement('div');
+            messageBox.className = 'message-box';
+            messageBox.innerHTML = `
+                <p>${message}</p>
+                <button>OK</button>
+            `;
+            document.body.appendChild(messageBox);
+
+            messageBox.querySelector('button').addEventListener('click', () => {
+                document.body.removeChild(messageBox);
+                if (onCloseCallback) {
+                    onCloseCallback();
+                }
+            });
+        }
+
+        // --- Map Viewer Functions ---
+        function initMapViewer() {
+            disposeMapViewer(); // Clean up any previous instance
+
+            mapScene = new THREE.Scene();
+            mapScene.background = new THREE.Color(0xe0e0e0); // Light background for map
+
+            mapCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            // Adjusted initial camera position for an overhead, slightly angled view
+            mapCamera.position.set(0, 8, 2); // Higher Y, slight positive Z for perspective
+
+            mapRenderer = new THREE.WebGLRenderer({ antialias: true });
+            mapRenderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(mapRenderer.domElement);
+
+            mapControls = new OrbitControls(mapCamera, mapRenderer.domElement);
+            // Target remains at the origin, as the model will be centered there
+            mapControls.target.set(0, 0, 0);
+            mapControls.enableDamping = true;
+            mapControls.dampingFactor = 0.1;
+            mapControls.minDistance = 0.5; // Allow closer zoom
+            mapControls.maxDistance = 15; // Limit max zoom out
+            mapControls.update(); // Update controls after changing target/position
+
+            // Lighting for map scene
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            mapScene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 10, 7.5);
+            directionalLight.castShadow = true;
+            mapScene.add(directionalLight);
+
+            // Load the GLB map model
+            gltfLoader.load(MAP_MODEL_PATH, (gltf) => {
+                mapLoadedModel = gltf.scene; // GLTFLoader returns gltf object, scene is gltf.scene
+                mapScene.add(mapLoadedModel);
+
+                // Rotate the model to make Z+ the "up" direction if it was exported Y-up
+                // A rotation of -90 degrees (-Math.PI / 2 radians) around the X-axis
+                // will typically reorient a Y-up model to be Z-up.
+                mapLoadedModel.rotation.x = -Math.PI / 2;
+
+                // --- Dynamic Scaling and Centering ---
+                const box = new THREE.Box3().setFromObject(mapLoadedModel);
+                const size = box.getSize(new THREE.Vector3());
+                const center = box.getCenter(new THREE.Vector3());
+
+                // Determine the largest dimension of the model
+                const maxDim = Math.max(size.x, size.y, size.z);
+                // Define a target size for the model in the scene (e.g., 5 units wide/tall)
+                const targetSize = 5;
+                const scaleFactor = targetSize / maxDim;
+
+                mapLoadedModel.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+                // Recalculate bounding box after scaling to get accurate center for positioning
+                box.setFromObject(mapLoadedModel);
+                box.getCenter(center);
+
+                // Adjust model's position so its center (or base) is at the origin (0,0,0)
+                // This ensures OrbitControls rotate around the model's center
+                mapLoadedModel.position.sub(center);
+                // Adjust position to place the model's base (min Y after rotation) at Y=0
+                const newBox = new THREE.Box3().setFromObject(mapLoadedModel);
+                mapLoadedModel.position.y += Math.abs(newBox.min.y); // Lift it so its lowest point is at Y=0
+
+
+                // --- Dynamic Hotspot Creation from GLTF nodes ---
+                // Traverse the loaded model to find nodes that represent checkpoints
+                mapLoadedModel.traverse((node) => {
+                    // Assuming checkpoint nodes are named "Checkpoint_X" and have a targetUrl in userData
+                    // You might need to adjust 'node.name.startsWith' or the property name based on your GLB export
+                    if (node.isMesh && node.name.startsWith('Checkpoint_') && node.userData.targetUrl) {
+                        const checkpointIdMatch = node.name.match(/Checkpoint_(\d+)/);
+                        const checkpointName = checkpointIdMatch ? `Checkpoint ${checkpointIdMatch[1]}` : node.name;
+                        const targetUrl = node.userData.targetUrl;
+                        const description = node.userData.description || `Go to ${checkpointName} details`; // Optional description from userData
+
+                        // Get the world position of the checkpoint node
+                        const worldPosition = new THREE.Vector3();
+                        node.getWorldPosition(worldPosition);
+
+                        // Pass all relevant data to createHotspot, including the targetUrl
+                        createHotspot(
+                            worldPosition,
+                            checkpointName,
+                            description,
+                            targetUrl
+                        );
+                    }
+                });
+
+                console.log("Map Model loaded, scaled, centered, and hotspots created from GLTF data.");
+            }, undefined, (error) => {
+                console.error('Error loading Map GLB model:', error);
+                showCustomMessage("Error loading 3D map model. Please try again later.", () => {});
+            });
+
+            animateMapViewer();
+            window.addEventListener('resize', onMapWindowResize);
+
+            mapRenderer.domElement.addEventListener('click', onMapCanvasClick); // Use renderer.domElement for clicks
+        }
+
+        // Create hotspot label and store reference
+        // Now accepts targetUrl instead of checkpointId
+        function createHotspot(position, name, description, targetUrl) {
+            const label = document.createElement('div');
+            label.className = 'hotspot-label';
+            label.textContent = name;
+            label.title = description;
+            label.style.position = 'absolute';
+            label.style.pointerEvents = 'auto'; // Ensure clicks are captured
+            label.style.cursor = 'pointer';
+
+            label.addEventListener('click', () => {
+                console.log(`Clicked hotspot: ${name}. Redirecting to ${targetUrl}`);
+                showLoading(); // Show loading screen before redirect
+                window.location.href = targetUrl; // Use the targetUrl for redirection
+            });
+
+            container.appendChild(label); // Append to the main container
+
+            // Create a small visual marker in 3D space for the hotspot
+            const markerGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+            const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.7 });
+            const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+            marker.position.copy(position);
+            marker.userData.isHotspot = true; // Mark for raycasting
+            marker.userData.targetUrl = targetUrl; // Store targetUrl for raycasting
+            marker.userData.name = name;
+            mapScene.add(marker);
+
+            hotspots.push({ node: marker, label: label });
+        }
+
+        // Update hotspot label positions on render
+        function updateHotspots() {
+            hotspots.forEach(({ node, label }) => {
+                const pos = new THREE.Vector3();
+                node.getWorldPosition(pos);
+                pos.project(mapCamera);
+
+                const x = (pos.x * 0.5 + 0.5) * window.innerWidth; // Use window.innerWidth/Height
+                const y = (-pos.y * 0.5 + 0.5) * window.innerHeight;
+
+                label.style.transform = `translate(-50%, -100%) translate(${x}px,${y}px)`;
+
+                const isVisible = pos.z < 1; // Check if in front of camera
+                label.style.display = isVisible ? 'block' : 'none';
+            });
+        }
+
+        function animateMapViewer() {
+            if (mapRenderer) {
+                mapAnimateId = requestAnimationFrame(animateMapViewer);
+                if (mapControls) mapControls.update();
+                updateHotspots(); // Update hotspot positions
+
+                // Update camera coordinates display
+                if (mapCamera) {
+                    const camPos = mapCamera.position;
+                    cameraCoordinatesDisplay.textContent = `Camera Position: X: ${camPos.x.toFixed(2)}, Y: ${camPos.y.toFixed(2)}, Z: ${camPos.z.toFixed(2)}`;
+                }
+
+                mapRenderer.render(mapScene, mapCamera);
+            }
+        }
+
+        function onMapWindowResize() {
+            if (mapCamera && mapRenderer) {
+                mapCamera.aspect = window.innerWidth / window.innerHeight;
+                mapCamera.updateProjectionMatrix();
+                mapRenderer.setSize(window.innerWidth, window.innerHeight);
+                updateHotspots(); // Update hotspot positions after resize
+            }
+        }
+
+        function disposeMapViewer() {
+            if (mapAnimateId) {
+                cancelAnimationFrame(mapAnimateId);
+                mapAnimateId = null;
+            }
+            if (mapScene) {
+                mapScene.traverse(obj => {
+                    if (obj.isMesh) {
+                        if (obj.geometry) obj.geometry.dispose();
+                        if (obj.material) {
+                            if (Array.isArray(obj.material)) {
+                                obj.material.forEach(material => material.dispose());
+                            } else {
+                                obj.material.dispose();
+                            }
+                        }
+                    }
+                });
+                mapScene.clear();
+                mapScene = null;
+            }
+            if (mapRenderer) {
+                mapRenderer.dispose();
+                mapRenderer = null;
+            }
+            if (mapControls) {
+                mapControls.dispose();
+                mapControls = null;
+            }
+            if (mapLoadedModel) {
+                mapLoadedModel = null;
+            }
+            hotspots.forEach(({ label }) => {
+                if (label.parentNode) {
+                    label.parentNode.removeChild(label);
+                }
+            });
+            hotspots.length = 0;
+            window.removeEventListener('resize', onMapWindowResize);
+            if (mapRenderer && mapRenderer.domElement) {
+                mapRenderer.domElement.removeEventListener('click', onMapCanvasClick);
+            }
+        }
+
+        // Raycasting for clicks on 3D objects in the map viewer
+        const mapRaycaster = new THREE.Raycaster();
+        const mapMouse = new THREE.Vector2();
+
+        function onMapCanvasClick(event) {
+            // Calculate mouse position in normalized device coordinates (-1 to +1)
+            mapMouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mapMouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+
+            mapRaycaster.setFromCamera(mapMouse, mapCamera);
+
+            // Find intersected objects (only hotspots)
+            const intersects = mapRaycaster.intersectObjects(mapScene.children, true);
+
+            for (const intersect of intersects) {
+                // Check if the intersected object is a hotspot and has a targetUrl
+                if (intersect.object.userData.isHotspot && intersect.object.userData.targetUrl) {
+                    const hotspotName = intersect.object.userData.name;
+                    const targetUrl = intersect.object.userData.targetUrl;
+                    console.log(`3D Hotspot clicked: ${hotspotName}. Redirecting to ${targetUrl}`);
+                    showLoading(); // Show loading screen before redirect
+                    window.location.href = targetUrl; // Use the targetUrl for redirection
+                    break; // Only handle the first intersected hotspot
+                }
+            }
+        }
+
+        // --- Event Listeners for Buttons ---
+        mapBackToArButton.addEventListener('click', () => {
+            showLoading(); // Show loading screen before redirect
+            window.location.href = 'index.html'; // Go back to the AR scanning page
+        });
+
+        mapReturnToHomeButton.addEventListener('click', () => {
+            showLoading(); // Show loading screen before redirect
+            window.location.href = 'index.html'; // Go back to the welcome screen (which is index.html)
+        });
+
+        // Initialize the map viewer on page load
+        window.addEventListener('load', () => {
+            initMapViewer();
+            hideLoading(); // Hide loading screen once map is initialized
+        });
+    </script>
+</body>
+</html>
+>>>>>>> 0236351276e188c5347d852ac46a6f61f892a03c
