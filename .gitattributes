@@ -8,3 +8,4 @@ TestingBird.glb filter=lfs diff=lfs merge=lfs -text
 bukit_kiara_map.glb filter=lfs diff=lfs merge=lfs -text
 *.glb filter=lfs diff=lfs merge=lfs -text
 >>>>>>> 0236351276e188c5347d852ac46a6f61f892a03c
+models/BukitKiaraMap.fbx filter=lfs diff=lfs merge=lfs -text
