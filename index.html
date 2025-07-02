@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +7,7 @@
     <title>Bukit Kiara AR World - Scan to Enter</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
+    <!-- MindAR.js for initial marker detection -->
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.1/dist/mindar-image-aframe.prod.js"></script>
 
@@ -15,6 +17,43 @@
             overflow: hidden;
             font-family: 'Inter', sans-serif;
             background-color: #f0f0f0;
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #2c3e50; /* Dark blue background */
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Ensure it's on top */
+            transition: opacity 0.5s ease-out;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none; /* Disable interaction when hidden */
+        }
+
+        .spinner {
+            border: 8px solid rgba(255, 255, 255, 0.3);
+            border-top: 8px solid #3498db; /* Blue spinner */
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         /* Welcome Screen Styles */
@@ -100,9 +139,50 @@
             z-index: 50; /* Above AR scene */
             display: none; /* Hidden until AR scene is active */
         }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            #welcome-screen h1 {
+                font-size: 2.2em;
+            }
+            #welcome-screen p {
+                font-size: 1em;
+                padding: 0 15px;
+            }
+            #welcome-button {
+                padding: 12px 25px;
+                font-size: 1.2em;
+            }
+            #scan-message {
+                font-size: 1em;
+                padding: 8px 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #welcome-screen h1 {
+                font-size: 1.8em;
+            }
+            #welcome-screen p {
+                font-size: 0.9em;
+            }
+            #welcome-button {
+                padding: 10px 20px;
+                font-size: 1em;
+            }
+            #scan-message {
+                font-size: 0.9em;
+                padding: 6px 12px;
+            }
+        }
     </style>
 </head>
 <body>
+    <div id="loading-screen" class="loading-screen hidden">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+    </div>
+
     <div id="welcome-screen">
         <h1>Welcome to Bukit Kiara AR World!</h1>
         <p>Scan the special map to unlock the interactive 3D experience.</p>
@@ -115,7 +195,9 @@
         vr-mode-ui="enabled: false"
         device-orientation-permission-ui="enabled: false"
         visible="false"
+        loading-screen="enabled: false"
     >
+        <!-- This entity will listen for the targetFound event -->
         <a-entity mindar-image-target="targetIndex: 0"></a-entity>
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
     </a-scene>
@@ -127,7 +209,19 @@
         const welcomeButton = document.getElementById('welcome-button');
         const arScanScene = document.getElementById('ar-scan-scene');
         const scanMessage = document.getElementById('scan-message');
+        const loadingScreen = document.getElementById('loading-screen'); // Get loading screen
+
         let targetDetected = false; // Flag to prevent multiple redirects
+
+        // Show loading screen before redirect
+        function showLoading() {
+            loadingScreen.classList.remove('hidden');
+        }
+
+        // Hide loading screen
+        function hideLoading() {
+            loadingScreen.classList.add('hidden');
+        }
 
         welcomeButton.addEventListener('click', () => {
             welcomeScreen.classList.add('hidden');
@@ -150,6 +244,7 @@
                         scanMessage.textContent = "Map detected! Loading 3D experience...";
                         scanMessage.style.backgroundColor = 'rgba(46, 204, 113, 0.8)'; // Green background
                         
+                        showLoading(); // Show loading screen before redirect
                         // Redirect after a short delay to show the message
                         setTimeout(() => {
                             window.location.href = 'bukitkiaramap.html';
@@ -168,6 +263,9 @@
                 console.error("MindAR image target entity not found. Is your A-Frame scene correctly structured?");
             }
         });
+
+        // Hide loading screen once the page is fully loaded (useful if navigating back)
+        window.addEventListener('load', hideLoading);
     </script>
 </body>
 </html>

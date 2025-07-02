@@ -1,0 +1,11 @@
+# In your repository root:
+# Create a new file named .gitignore
+# Add the following lines to it:
+
+# Node.js dependencies
+node_modules/
+package-lock.json
+package.json
+
+# VSCode settings (optional, but generally good to ignore)
+.vscode/
