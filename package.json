@@ -19,6 +19,6 @@
   },
   "homepage": "https://github.com/BlyatDestroyer69/3DARModel#readme",
   "dependencies": {
-    "three": "^0.177.0"
+    "three": "^0.178.0"
   }
 }
